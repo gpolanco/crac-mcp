@@ -5,15 +5,6 @@ const inputSchema = z.object({
   name: z.string().describe("Name to greet"),
 });
 
-const outputSchema = z.object({
-  content: z.array(
-    z.object({
-      type: z.string(),
-      text: z.string(),
-    })
-  ),
-});
-
 export function createMcpServer(): McpServer {
   const server = new McpServer({
     name: "crac-mcp",
@@ -27,7 +18,6 @@ export function createMcpServer(): McpServer {
       title: "Hello Tool",
       description: "Say hello to someone",
       inputSchema: inputSchema.shape,
-      outputSchema: outputSchema.shape,
     },
     async (args: any) => {
       const { name } = args;
@@ -56,7 +46,6 @@ export function createMcpServer(): McpServer {
             "Sección específica de información (server, tools, resources, prompts)"
           ),
       },
-      outputSchema: outputSchema.shape,
     },
     async (args: any) => {
       const { section } = args;
@@ -95,7 +84,6 @@ export function createMcpServer(): McpServer {
             text: JSON.stringify(filteredInfo, null, 2),
           },
         ],
-        structuredContent: filteredInfo,
       };
     }
   );
