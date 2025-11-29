@@ -23,9 +23,9 @@ yarn-error.log
 .DS_Store
 Thumbs.db
 
-# Documentation (opcional, puedes incluirlos si quieres)
-README.md
-AGENTS.md
+# Documentation (keep in image for reference)
+# README.md
+# AGENTS.md
 
 # Tests (si los tienes)
 tests

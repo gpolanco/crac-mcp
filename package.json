@@ -1,16 +1,21 @@
 {
-  "name": "hello-server",
+  "name": "crac-mcp",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "MCP server with tools, resources, and prompts - deployed on Railway",
+  "main": ".smithery/index.cjs",
   "module": "./src/index.ts",
   "type": "module",
   "scripts": {
     "dev": "smithery dev",
     "build": "smithery build"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "smithery",
+    "railway"
+  ],
+  "author": "gpolanco",
   "license": "ISC",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.20.0",
