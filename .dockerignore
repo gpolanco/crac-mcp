@@ -1,0 +1,48 @@
+# Dependencies
+node_modules
+npm-debug.log
+pnpm-debug.log
+yarn-error.log
+
+# Build outputs (se generarán en el contenedor)
+.smithery
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation (opcional, puedes incluirlos si quieres)
+README.md
+AGENTS.md
+
+# Tests (si los tienes)
+tests
+*.test.ts
+*.spec.ts
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs
+
+# Temporary files
+tmp
+temp
+*.tmp
+
