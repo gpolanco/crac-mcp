@@ -8,8 +8,6 @@ docker build -t crac-mcp:latest .
 
 ## Ejecutar el contenedor
 
-### Opción 1: Docker run
-
 ```bash
 docker run -d \
   --name crac-mcp \
@@ -18,22 +16,17 @@ docker run -d \
   crac-mcp:latest
 ```
 
-### Opción 2: Docker Compose (recomendado)
-
-```bash
-docker-compose up -d
-```
-
 Para ver los logs:
 
 ```bash
-docker-compose logs -f
+docker logs -f crac-mcp
 ```
 
 Para detener:
 
 ```bash
-docker-compose down
+docker stop crac-mcp
+docker rm crac-mcp
 ```
 
 ## Verificar que funciona

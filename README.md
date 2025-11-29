@@ -90,10 +90,7 @@ You can also deploy using Docker on any platform:
 docker build -t crac-mcp:latest .
 
 # Run locally
-docker-compose up -d
-
-# Or run directly
-docker run -d -p 8081:8081 crac-mcp:latest
+docker run -d -p 8081:8081 --name crac-mcp crac-mcp:latest
 ```
 
 See [DOCKER.md](./DOCKER.md) for detailed Docker instructions.
@@ -106,7 +103,6 @@ crac-mcp/
 │   └── index.ts          # MCP server implementation
 ├── .smithery/            # Build output (generated)
 ├── Dockerfile            # Docker configuration
-├── docker-compose.yml    # Docker Compose setup
 ├── railway.json          # Railway deployment config
 ├── smithery.yaml         # Smithery runtime config
 ├── package.json          # Dependencies and scripts
