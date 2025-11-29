@@ -1,5 +1,6 @@
 # crac-mcp
 
+[![smithery badge](https://smithery.ai/badge/@gpolanco/crac-mcp-v2)](https://smithery.ai/server/@gpolanco/crac-mcp-v2)
 [![smithery badge](https://smithery.ai/badge/@gpolanco/crac-mcp)](https://smithery.ai/server/@gpolanco/crac-mcp)
 
 A Model Context Protocol (MCP) server demonstrating tools, resources, and prompts.
