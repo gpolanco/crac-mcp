@@ -1,16 +1,15 @@
 # crac-mcp
 
-[![smithery badge](https://smithery.ai/badge/@gpolanco/crac-mcp)](https://smithery.ai/server/@gpolanco/crac-mcp)
-
 A Model Context Protocol (MCP) server demonstrating tools, resources, and prompts.
 
 **Live Server:** [https://crac-mcp-production.up.railway.app/mcp](https://crac-mcp-production.up.railway.app/mcp)
 
-Built with [Smithery SDK](https://smithery.ai/docs) and deployed on [Railway](https://railway.app).
+Built with [@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/typescript-sdk) and deployed on [Railway](https://railway.app).
 
 ## Features
 
 - **Tool**: `hello` - Say hello to someone
+- **Tool**: `get-info` - Get server information
 - **Resource**: `history://hello-world` - The origin story of "Hello, World"
 - **Prompt**: `greet` - Reusable greeting template
 
@@ -18,7 +17,6 @@ Built with [Smithery SDK](https://smithery.ai/docs) and deployed on [Railway](ht
 
 - **Node.js** 20+
 - **pnpm** (or npm/yarn)
-- **Smithery API key** (for local development): Get yours at [smithery.ai/account/api-keys](https://smithery.ai/account/api-keys)
 
 ## Getting Started
 
@@ -36,10 +34,11 @@ Built with [Smithery SDK](https://smithery.ai/docs) and deployed on [Railway](ht
    pnpm dev
    ```
 
-   This starts the server on `http://127.0.0.1:8081/mcp` and opens the Smithery playground.
+   This starts the server on `http://localhost:3000/mcp` with hot reload.
 
 3. Try the tools:
    - Tool: `hello` - Greet someone
+   - Tool: `get-info` - Get server information
    - Resource: `history://hello-world` - Read about "Hello, World" history
    - Prompt: `greet` - Use greeting template
 
@@ -49,7 +48,7 @@ Built with [Smithery SDK](https://smithery.ai/docs) and deployed on [Railway](ht
 pnpm build
 ```
 
-Creates bundled server in `.smithery/index.cjs`
+Compiles TypeScript to JavaScript in `dist/` directory.
 
 ## Deployment
 
@@ -100,11 +99,12 @@ See [DOCKER.md](./DOCKER.md) for detailed Docker instructions.
 ```
 crac-mcp/
 ├── src/
-│   └── index.ts          # MCP server implementation
-├── .smithery/            # Build output (generated)
+│   ├── index.ts          # MCP server implementation
+│   └── server.ts         # Express HTTP server
+├── dist/                 # Build output (generated)
 ├── Dockerfile            # Docker configuration
 ├── railway.json          # Railway deployment config
-├── smithery.yaml         # Smithery runtime config
+├── tsconfig.json         # TypeScript configuration
 ├── package.json          # Dependencies and scripts
 └── README.md            # This file
 ```
@@ -114,29 +114,41 @@ crac-mcp/
 Your code is organized as:
 
 - `src/index.ts` - MCP server with tools, resources, and prompts
-- `smithery.yaml` - Runtime specification (TypeScript)
+- `src/server.ts` - Express HTTP server with MCP transport
+- `tsconfig.json` - TypeScript configuration
 - `Dockerfile` - Container configuration for deployment
 
 Edit `src/index.ts` to add your own tools, resources, and prompts.
 
-## Configuration
+## Available Tools
 
-### Session Configuration
+### `get-info`
 
-The server supports optional session configuration via `configSchema`:
+Returns generic server information.
 
-- `debug` (boolean, default: false) - Enable debug logging
+**Input:**
 
-Pass configuration as URL parameters:
+- `section` (optional string): Filter information by section (server, tools, resources, prompts)
 
-```
-https://crac-mcp-production.up.railway.app/mcp?debug=true
+**Output:**
+
+- Server name and version
+- List of available tools
+- List of available resources
+- List of available prompts
+
+**Example:**
+
+```json
+{
+  "section": "tools"
+}
 ```
 
 ## Learn More
 
-- [Smithery Docs](https://smithery.ai/docs)
 - [MCP Protocol](https://modelcontextprotocol.io)
+- [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk)
 - [Railway Docs](https://docs.railway.app)
 - [Docker Documentation](./DOCKER.md)
 

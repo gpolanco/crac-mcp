@@ -16,7 +16,7 @@ RUN pnpm install --frozen-lockfile
 # Copiar código fuente y configuración
 COPY . .
 
-# Construir el servidor MCP
+# Construir el servidor MCP (compila TypeScript)
 RUN pnpm run build
 
 # Stage de producción
@@ -30,22 +30,20 @@ WORKDIR /app
 
 # Copiar solo archivos necesarios para producción
 COPY package.json pnpm-lock.yaml ./
-COPY smithery.yaml ./
 
 # Instalar solo dependencias de producción
 RUN pnpm install --frozen-lockfile --prod
 
 # Copiar el build desde el stage anterior
-COPY --from=builder /app/.smithery ./.smithery
+COPY --from=builder /app/dist ./dist
 
-# Exponer el puerto (Render asigna dinámicamente, pero 8081 es el default)
-# El servidor de Smithery SDK lee process.env.PORT automáticamente
-ENV PORT=8081
-EXPOSE 8081
+# Exponer el puerto (Railway asigna dinámicamente, pero 3000 es el default)
+ENV PORT=3000
+EXPOSE 3000
 
 # Variables de entorno opcionales
 ENV NODE_ENV=production
 
 # Comando para ejecutar el servidor
-CMD ["node", ".smithery/index.cjs"]
+CMD ["node", "dist/server.js"]
 

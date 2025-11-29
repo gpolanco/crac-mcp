@@ -1,6 +1,6 @@
 # crac-mcp - MCP Server Guide
 
-A Model Context Protocol (MCP) server built with TypeScript and the Smithery SDK, deployed on Railway.
+A Model Context Protocol (MCP) server built with TypeScript and the standard MCP SDK, deployed on Railway.
 
 ## Table of Contents
 
@@ -17,9 +17,11 @@ A Model Context Protocol (MCP) server built with TypeScript and the Smithery SDK
 ```
 crac-mcp/
 ├── src/
-│   └── index.ts          # Main server implementation
-├── package.json           # Dependencies and scripts
-├── smithery.yaml          # Runtime configuration
+│   ├── index.ts          # MCP server implementation
+│   └── server.ts         # Express HTTP server
+├── dist/                 # Build output (generated)
+├── package.json          # Dependencies and scripts
+├── tsconfig.json         # TypeScript configuration
 ├── Dockerfile            # Docker configuration for deployment
 ├── railway.json          # Railway deployment config
 └── README.md             # Project documentation
@@ -33,19 +35,19 @@ crac-mcp/
 # Install dependencies
 pnpm install
 
-# Start development server (HTTP on port 8081)
+# Start development server (HTTP on port 3000)
 pnpm dev
 
 # Build for production
 pnpm build
 ```
 
-The development server starts on `http://127.0.0.1:8081/mcp` and opens the Smithery playground for testing.
+The development server starts on `http://localhost:3000/mcp` with hot reload.
 
 ### Kill existing process
 
 ```bash
-lsof -ti:8081 | xargs kill
+lsof -ti:3000 | xargs kill
 ```
 
 ## Core Concepts
@@ -134,67 +136,39 @@ server.registerPrompt(
 - **Resources**: Read-only data (documentation, reference info)
 - **Prompts**: Conversation templates (reusable workflows)
 
-### Session Configuration
+### Server Architecture
 
-Define a configuration schema using Zod to pass personalized settings per connection:
+The server uses a stateless HTTP transport, creating a new transport instance for each request to prevent JSON-RPC request ID collisions:
 
 ```typescript
-export const configSchema = z.object({
-  apiKey: z.string().describe("Your API key"),
-  debug: z.boolean().default(false).describe("Enable debug mode"),
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+
+export function createMcpServer(): McpServer {
+  const server = new McpServer({
+    name: "crac-mcp",
+    version: "1.0.0",
+  });
+
+  // Register tools, resources, and prompts
+  // ...
+
+  return server;
+}
+```
+
+The HTTP server creates a new transport for each request in stateless mode:
+
+```typescript
+app.all("/mcp", async (req, res) => {
+  const transport = new StreamableHTTPServerTransport({
+    sessionIdGenerator: undefined, // Stateless mode
+    enableJsonResponse: true,
+  });
+
+  await mcpServer.connect(transport);
+  await transport.handleRequest(req, res, req.body);
 });
-
-export default function createServer({
-  config,
-}: {
-  config: z.infer<typeof configSchema>;
-}) {
-  const server = new McpServer({ name: "My Server", version: "1.0.0" });
-
-  // Use config in your tools
-  server.registerTool(
-    "my-tool",
-    {
-      /* ... */
-    },
-    async (args) => {
-      if (config.debug) console.log("Debug mode enabled");
-      // Use config.apiKey for API calls
-      return { content: [{ type: "text", text: "Result" }] };
-    }
-  );
-
-  return server.server;
-}
-```
-
-**Pass configuration via URL parameters:**
-
-```
-http://localhost:8081/mcp?apiKey=abc123&debug=true
-```
-
-### Stateful vs Stateless Servers
-
-**Stateful (Default)**: Maintains state between calls within a session:
-
-```typescript
-export default function createServer({ sessionId, config }) {
-  const server = new McpServer({ name: "My App", version: "1.0.0" });
-  // Store session-specific state
-  return server.server;
-}
-```
-
-**Stateless**: Fresh instance for each request:
-
-```typescript
-export const stateless = true;
-
-export default function createServer({ config }) {
-  const server = new McpServer({ name: "My App", version: "1.0.0" });
-  return server.server;
-}
 ```
 
 ## Development
@@ -202,9 +176,8 @@ export default function createServer({ config }) {
 ### Customizing Your Server
 
 1. **Update package.json** with your project details
-2. **Choose stateless or stateful** (default is stateful)
-3. **Define config schema** (optional) using Zod
-4. **Add tools, resources, and prompts** in `src/index.ts`
+2. **Add tools, resources, and prompts** in `src/index.ts`
+3. **Configure HTTP server** in `src/server.ts` if needed
 
 ### Testing Your Server
 
@@ -214,7 +187,7 @@ export default function createServer({ config }) {
 pnpm dev
 ```
 
-Starts server on `http://127.0.0.1:8081/mcp` with hot reload.
+Starts server on `http://localhost:3000/mcp` with hot reload.
 
 #### Direct Protocol Testing
 
@@ -222,22 +195,28 @@ Test the MCP protocol directly with curl:
 
 ```bash
 # Initialize connection
-curl -X POST "http://127.0.0.1:8081/mcp?debug=false" \
+curl -X POST "http://localhost:3000/mcp" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
   -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{"tools":{}},"clientInfo":{"name":"test-client","version":"1.0.0"}}}'
 
 # List tools
-curl -X POST "http://127.0.0.1:8081/mcp" \
+curl -X POST "http://localhost:3000/mcp" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
   -d '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
 
 # Call a tool
-curl -X POST "http://127.0.0.1:8081/mcp" \
+curl -X POST "http://localhost:3000/mcp" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
   -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"hello","arguments":{"name":"World"}}}'
+
+# Call get-info tool
+curl -X POST "http://localhost:3000/mcp" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"get-info","arguments":{}}}'
 ```
 
 ## Deployment
@@ -274,10 +253,10 @@ Add to your Cursor MCP configuration:
 
 #### Other Clients
 
-Connect to the server URL with optional configuration parameters:
+Connect to the server URL:
 
 ```
-https://crac-mcp-production.up.railway.app/mcp?debug=false
+https://crac-mcp-production.up.railway.app/mcp
 ```
 
 ### Docker Deployment
@@ -289,7 +268,7 @@ You can also deploy using Docker on any platform:
 docker build -t crac-mcp:latest .
 
 # Run container
-docker run -d -p 8081:8081 --name crac-mcp crac-mcp:latest
+docker run -d -p 3000:3000 --name crac-mcp crac-mcp:latest
 ```
 
 See [DOCKER.md](./DOCKER.md) for detailed instructions.
@@ -298,15 +277,8 @@ See [DOCKER.md](./DOCKER.md) for detailed instructions.
 
 ### Port Issues
 
-- Default port is **8081**
-- Kill existing process: `lsof -ti:8081 | xargs kill`
-
-### Config Issues
-
-```bash
-# Check your configuration schema
-node -e "import('./src/index.ts').then(m => console.log(JSON.stringify(m.configSchema._def, null, 2)))"
-```
+- Default port is **3000** (configurable via `PORT` environment variable)
+- Kill existing process: `lsof -ti:3000 | xargs kill`
 
 ### Import Issues
 
@@ -323,12 +295,45 @@ node -e "import('./src/index.ts').then(m => console.log(JSON.stringify(m.configS
 ### Build Issues
 
 - Ensure `pnpm build` completes successfully
-- Check that `.smithery/index.cjs` is generated
+- Check that `dist/` directory is generated with compiled JavaScript
 - Verify all dependencies are installed
+
+## Available Tools
+
+### `get-info`
+
+Returns generic server information including server name, version, and lists of available tools, resources, and prompts.
+
+**Input Schema:**
+
+- `section` (optional string): Filter information by section (server, tools, resources, prompts)
+
+**Output:**
+
+- Server information (name, version)
+- List of available tools
+- List of available resources
+- List of available prompts
+
+**Example Usage:**
+
+```typescript
+// Get all information
+const result = await client.callTool({
+  name: "get-info",
+  arguments: {},
+});
+
+// Get only tools list
+const toolsOnly = await client.callTool({
+  name: "get-info",
+  arguments: { section: "tools" },
+});
+```
 
 ## Resources
 
 - **MCP Protocol**: [modelcontextprotocol.io](https://modelcontextprotocol.io)
-- **Smithery SDK**: [smithery.ai/docs](https://smithery.ai/docs)
+- **MCP TypeScript SDK**: [github.com/modelcontextprotocol/typescript-sdk](https://github.com/modelcontextprotocol/typescript-sdk)
 - **Railway Docs**: [docs.railway.app](https://docs.railway.app)
 - **Project README**: [README.md](./README.md)
