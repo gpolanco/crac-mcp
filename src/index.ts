@@ -1,8 +1,20 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { parseCommand } from "./parser/command-parser.js";
+import { ContextSearcher } from "./rag/context-searcher.js";
+import { PromptBuilder } from "./prompts/prompt-builder.js";
 
 const inputSchema = z.object({
   name: z.string().describe("Name to greet"),
+});
+
+const outputSchema = z.object({
+  content: z.array(
+    z.object({
+      type: z.string(),
+      text: z.string(),
+    })
+  ),
 });
 
 export function createMcpServer(): McpServer {
@@ -11,6 +23,10 @@ export function createMcpServer(): McpServer {
     version: "1.0.0",
   });
 
+  // Initialize RAG components
+  const contextSearcher = new ContextSearcher();
+  const promptBuilder = new PromptBuilder();
+
   // Add a tool
   server.registerTool(
     "hello",
@@ -18,6 +34,7 @@ export function createMcpServer(): McpServer {
       title: "Hello Tool",
       description: "Say hello to someone",
       inputSchema: inputSchema.shape,
+      outputSchema: outputSchema.shape,
     },
     async (args: any) => {
       const { name } = args;
@@ -46,12 +63,13 @@ export function createMcpServer(): McpServer {
             "Sección específica de información (server, tools, resources, prompts)"
           ),
       },
+      outputSchema: outputSchema.shape,
     },
     async (args: any) => {
       const { section } = args;
       const tools = ["hello", "get-info"];
       const resources = ["hello-world-history"];
-      const prompts = ["greet"];
+      const prompts = ["greet", "dev-task"];
 
       const info = {
         server: {
@@ -84,6 +102,7 @@ export function createMcpServer(): McpServer {
             text: JSON.stringify(filteredInfo, null, 2),
           },
         ],
+        structuredContent: filteredInfo,
       };
     }
   );
@@ -128,6 +147,92 @@ export function createMcpServer(): McpServer {
           },
         ],
       };
+    }
+  );
+
+  // Add dev-task prompt with RAG integration
+  server.registerPrompt(
+    "dev-task",
+    {
+      title: "Development Task",
+      description:
+        "Generate context-aware development prompts using RAG. Parses natural language commands and searches for relevant context from the monorepo.",
+      argsSchema: {
+        command: z
+          .string()
+          .describe(
+            "Development command in natural language. Examples: 'dev rac implementa la nueva sección booking-search', 'test partners add unit tests for auth flow', 'refactor global improve code structure'"
+          ),
+      },
+    },
+    async (args: any) => {
+      try {
+        const { command } = args;
+
+        if (!command || command.trim().length === 0) {
+          return {
+            messages: [
+              {
+                role: "user",
+                content: {
+                  type: "text",
+                  text: "Error: Command cannot be empty. Please provide a development command.",
+                },
+              },
+            ],
+          };
+        }
+
+        // Parse command
+        const parsed = parseCommand(command);
+        console.log(`[MCP] Parsed command:`, parsed);
+
+        // Search context using RAG (invisible to user)
+        const ragContext = await contextSearcher.searchContext(
+          parsed.requirements,
+          parsed.scope,
+          parsed.tool
+        );
+
+        // Build structured prompt
+        const structuredPrompt = promptBuilder.buildPrompt(parsed, ragContext);
+
+        // Return prompt ready for agent
+        // Note: MCP prompts only support "user" or "assistant" roles
+        // Combine system and user prompts into a single user message
+        const combinedPrompt = `${structuredPrompt.system}\n\n---\n\n${structuredPrompt.user}`;
+
+        return {
+          messages: [
+            {
+              role: "user",
+              content: {
+                type: "text",
+                text: combinedPrompt,
+              },
+            },
+          ],
+        };
+      } catch (error) {
+        console.error("[MCP] Error generating dev-task prompt:", error);
+
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Unknown error occurred while generating prompt";
+
+        return {
+          messages: [
+            {
+              role: "user",
+              content: {
+                type: "text",
+                text: `Error generating context-aware prompt: ${errorMessage}`,
+              },
+            },
+          ],
+        };
+      }
     }
   );
 

@@ -12,11 +12,32 @@ Built with [@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/t
 - **Tool**: `get-info` - Get server information
 - **Resource**: `history://hello-world` - The origin story of "Hello, World"
 - **Prompt**: `greet` - Reusable greeting template
+- **Prompt**: `dev-task` - ⭐ **Context-aware development prompts** using RAG (Retrieval-Augmented Generation)
 
 ## Prerequisites
 
 - **Node.js** 20+
 - **pnpm** (or npm/yarn)
+- **Supabase project** with pgvector extension enabled
+- **Google Gemini API key**
+
+## Environment Variables
+
+The following environment variables are required:
+
+- `SUPABASE_URL` - Your Supabase project URL
+- `SUPABASE_SERVICE_ROLE_KEY` - Your Supabase service role key (for server-side operations)
+- `GEMINI_API_KEY` - Your Google Gemini API key
+
+Create a `.env` file in the root directory with these variables:
+
+```env
+SUPABASE_URL=your_supabase_project_url
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+GEMINI_API_KEY=your_gemini_api_key
+```
+
+**Note:** The server will fail to start if any of these environment variables are missing.
 
 ## Getting Started
 
@@ -41,6 +62,7 @@ Built with [@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/t
    - Tool: `get-info` - Get server information
    - Resource: `history://hello-world` - Read about "Hello, World" history
    - Prompt: `greet` - Use greeting template
+   - Prompt: `dev-task` - Generate context-aware development prompts
 
 ### Build
 
@@ -99,14 +121,23 @@ See [DOCKER.md](./DOCKER.md) for detailed Docker instructions.
 ```
 crac-mcp/
 ├── src/
-│   ├── index.ts          # MCP server implementation
-│   └── server.ts         # Express HTTP server
-├── dist/                 # Build output (generated)
-├── Dockerfile            # Docker configuration
-├── railway.json          # Railway deployment config
-├── tsconfig.json         # TypeScript configuration
-├── package.json          # Dependencies and scripts
-└── README.md            # This file
+│   ├── index.ts              # MCP server implementation
+│   ├── server.ts             # Express HTTP server
+│   ├── lib/
+│   │   └── env.ts            # Environment variables validation
+│   ├── parser/
+│   │   └── command-parser.ts # Natural language command parser
+│   ├── rag/
+│   │   ├── gemini-client.ts  # Gemini embeddings client
+│   │   └── context-searcher.ts # RAG context searcher (Supabase)
+│   └── prompts/
+│       └── prompt-builder.ts # Structured prompt builder
+├── dist/                     # Build output (generated)
+├── Dockerfile                # Docker configuration
+├── railway.json              # Railway deployment config
+├── tsconfig.json             # TypeScript configuration
+├── package.json              # Dependencies and scripts
+└── README.md                 # This file
 ```
 
 ## Development
@@ -115,10 +146,28 @@ Your code is organized as:
 
 - `src/index.ts` - MCP server with tools, resources, and prompts
 - `src/server.ts` - Express HTTP server with MCP transport
+- `src/lib/env.ts` - Environment variables validation
+- `src/parser/command-parser.ts` - Parses natural language commands
+- `src/rag/gemini-client.ts` - Generates embeddings using Gemini API
+- `src/rag/context-searcher.ts` - Searches context in Supabase using RAG
+- `src/prompts/prompt-builder.ts` - Builds structured prompts with context
 - `tsconfig.json` - TypeScript configuration
 - `Dockerfile` - Container configuration for deployment
 
-Edit `src/index.ts` to add your own tools, resources, and prompts.
+### Architecture
+
+The `dev-task` prompt uses the following flow:
+
+1. **Command Parsing**: Extracts tool, scope, and requirements from natural language
+2. **Context Search**: Performs 4 parallel semantic searches in Supabase:
+   - Technology/stack information
+   - Folder structure patterns
+   - Code conventions
+   - Similar examples
+3. **Prompt Building**: Combines search results into structured prompts
+4. **Response**: Returns prompt ready for development agents
+
+All RAG operations are transparent to the user - they only see the final prompt result.
 
 ## Available Tools
 
@@ -144,6 +193,64 @@ Returns generic server information.
   "section": "tools"
 }
 ```
+
+## Available Prompts
+
+### `dev-task`
+
+Generates context-aware development prompts using RAG (Retrieval-Augmented Generation). This prompt automatically searches for relevant context from the monorepo documentation and generates structured prompts for development agents.
+
+**How it works:**
+
+1. Parses natural language commands to extract tool, scope, and requirements
+2. Searches for relevant context using semantic similarity (embeddings)
+3. Generates structured prompts with:
+   - Technical context (technology stack, frameworks)
+   - Project structure (folder organization, patterns)
+   - Code conventions (naming, imports, components)
+   - Similar examples (if available)
+
+**Input:**
+
+- `command` (string): Development command in natural language
+
+**Examples:**
+
+```json
+{
+  "command": "dev rac implementa la nueva sección booking-search"
+}
+```
+
+```json
+{
+  "command": "test partners add unit tests for auth flow"
+}
+```
+
+```json
+{
+  "command": "refactor global improve code structure"
+}
+```
+
+**Supported Commands:**
+
+- **Tools**: `dev`, `test`, `refactor`, `fix`, `update` (and variants)
+- **Scopes**: `rac`, `partners`, `global`, `web`, `mobile`, `suppliers`, `notifications`, `queues`
+- **Requirements**: Any natural language description of the task
+
+**Output:**
+
+Returns a structured prompt with:
+- System context (monorepo structure, conventions, principles)
+- Technical context from RAG search
+- Project structure from RAG search
+- Code conventions from RAG search
+- Similar examples from RAG search
+- Specific task instructions
+
+**Note:** The RAG search is completely transparent to the user. The prompt automatically includes relevant context from the monorepo documentation stored in Supabase.
 
 ## Learn More
 

@@ -2,6 +2,15 @@ import express from "express";
 import cors from "cors";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { createMcpServer } from "./index.js";
+import { validateEnvVars } from "./lib/env.js";
+
+// Validate environment variables on startup
+try {
+  validateEnvVars();
+} catch (error) {
+  console.error("Environment validation failed:", error);
+  process.exit(1);
+}
 
 const app = express();
 
