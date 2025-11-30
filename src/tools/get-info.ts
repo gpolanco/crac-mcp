@@ -35,7 +35,7 @@ export function registerGetInfoTool(server: McpServer): void {
 
       const info = {
         server: {
-          name: "crac-mcp",
+          name: "crac",
           version: "1.0.0",
         },
         tools,
@@ -68,4 +68,3 @@ export function registerGetInfoTool(server: McpServer): void {
     }
   );
 }
-

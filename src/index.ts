@@ -17,7 +17,7 @@ import { registerGenerateTasksPrompt } from "./prompts/generate-tasks.js";
  */
 export function createMcpServer(): McpServer {
   const server = new McpServer({
-    name: "crac-mcp",
+    name: "crac",
     version: "1.0.0",
   });
 
