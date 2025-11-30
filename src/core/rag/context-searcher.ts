@@ -269,6 +269,55 @@ export class ContextSearcher {
   }
 
   /**
+   * Searches for CRAC rules based on user context and rule categories
+   * Uses semantic search to find relevant rules from Supabase
+   *
+   * @param context - User's context/query to determine which rules are relevant
+   * @param ruleCategories - Optional array of rule category scopes to filter by
+   *                        If not provided, searches in all rule categories
+   * @param topK - Maximum number of results to return per category (default: 5)
+   * @returns Promise resolving to formatted string with combined rule content
+   *          Returns empty string if search fails (graceful degradation)
+   */
+  async searchRules(
+    context: string = "",
+    ruleCategories?: string[],
+    topK: number = 5
+  ): Promise<string> {
+    try {
+      // Build search query
+      const query = context.trim()
+        ? `CRAC monorepo rules conventions ${context}`
+        : "CRAC monorepo rules conventions";
+
+      // Generate embedding for the query
+      const embedding = await generateEmbedding(query);
+
+      // Search in Supabase
+      // Rules are always in "global" app
+      const results = await searchSimilarContexts(
+        embedding,
+        ["global"],
+        ruleCategories || undefined,
+        topK
+      );
+
+      // Combine results into formatted string
+      if (results.length === 0) {
+        return "";
+      }
+
+      return this.combineResults(results);
+    } catch (error) {
+      // Graceful degradation: return empty string if RAG fails
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      console.warn(`[ContextSearcher] Failed to search rules: ${errorMessage}`);
+      return "";
+    }
+  }
+
+  /**
    * Combines search results into a formatted string with metadata
    *
    * @param results - Array of SearchResult objects
@@ -289,4 +338,3 @@ export class ContextSearcher {
       .join("\n\n");
   }
 }
-

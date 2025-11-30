@@ -3,6 +3,8 @@
  * Analyzes context to determine which CRAC rules to provide
  */
 
+import { ContentCategory } from "../rag/content-categories.js";
+
 /**
  * Types of rules available
  */
@@ -178,5 +180,45 @@ export class CracRulesDetector {
     });
 
     return descriptions.join(", ");
+  }
+
+  /**
+   * Maps rule types to RAG content categories for Supabase search
+   *
+   * @param ruleTypes - Array of rule types to map
+   * @returns Array of RAG category scope strings for filtering Supabase search
+   */
+  getRagCategories(ruleTypes: CracRuleType[]): string[] {
+    const categories = new Set<string>();
+
+    for (const ruleType of ruleTypes) {
+      switch (ruleType) {
+        case CracRuleType.TESTING:
+          categories.add(ContentCategory.RULES.CRAC);
+          categories.add(ContentCategory.RULES.TESTING);
+          break;
+        case CracRuleType.STRUCTURE:
+          categories.add(ContentCategory.RULES.CRAC);
+          categories.add(ContentCategory.RULES.STRUCTURE);
+          break;
+        case CracRuleType.ENDPOINTS:
+          categories.add(ContentCategory.RULES.ENDPOINTS);
+          break;
+        case CracRuleType.CODE_STYLE:
+          categories.add(ContentCategory.RULES.CRAC);
+          categories.add(ContentCategory.RULES.CODE_STYLE);
+          break;
+        case CracRuleType.ALL:
+          // Return all rule categories
+          categories.add(ContentCategory.RULES.CRAC);
+          categories.add(ContentCategory.RULES.ENDPOINTS);
+          categories.add(ContentCategory.RULES.TESTING);
+          categories.add(ContentCategory.RULES.STRUCTURE);
+          categories.add(ContentCategory.RULES.CODE_STYLE);
+          break;
+      }
+    }
+
+    return Array.from(categories);
   }
 }

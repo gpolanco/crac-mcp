@@ -5,7 +5,8 @@
 
 import type { ParsedCommand } from "../parser/command-parser.js";
 import type { RAGContext } from "../rag/context-searcher.js";
-import { AgentRulesReader } from "../resources/agent-rules-reader.js";
+import { ContextSearcher } from "../rag/context-searcher.js";
+import { ContentCategory } from "../rag/content-categories.js";
 
 /**
  * Structured prompt with system and user messages
@@ -29,15 +30,15 @@ export interface StructuredPrompt {
  * Builds structured prompts for development agents with RAG context
  */
 export class PromptBuilder {
-  private agentRulesReader?: AgentRulesReader;
+  private contextSearcher?: ContextSearcher;
 
   /**
-   * Sets the agent rules reader for automatic inclusion of CRAC rules
+   * Sets the context searcher for automatic inclusion of CRAC rules via RAG
    *
-   * @param reader - The AgentRulesReader instance
+   * @param searcher - The ContextSearcher instance
    */
-  setAgentRulesReader(reader: AgentRulesReader): void {
-    this.agentRulesReader = reader;
+  setContextSearcher(searcher: ContextSearcher): void {
+    this.contextSearcher = searcher;
   }
 
   /**
@@ -45,13 +46,13 @@ export class PromptBuilder {
    *
    * @param command - The parsed command (tool, scope, requirements)
    * @param ragContext - The RAG context retrieved from Supabase
-   * @returns StructuredPrompt object with system and user messages
+   * @returns Promise resolving to StructuredPrompt object with system and user messages
    */
-  buildPrompt(
+  async buildPrompt(
     command: ParsedCommand,
     ragContext: RAGContext
-  ): StructuredPrompt {
-    const systemPrompt = this.buildSystemPrompt(command, ragContext);
+  ): Promise<StructuredPrompt> {
+    const systemPrompt = await this.buildSystemPrompt(command, ragContext);
     const userPrompt = this.buildUserPrompt(command, ragContext);
 
     return {
@@ -71,32 +72,37 @@ export class PromptBuilder {
    *
    * @param command - The parsed command
    * @param context - The RAG context
-   * @returns System prompt string
+   * @returns Promise resolving to system prompt string
    */
-  private buildSystemPrompt(
+  private async buildSystemPrompt(
     command: ParsedCommand,
     context: RAGContext
-  ): string {
+  ): Promise<string> {
     const scopeUpper = command.scope.toUpperCase();
 
     let systemPrompt = `You are an expert Full-Stack Engineer working on the ${scopeUpper} application in the CRAC (Centauro Rent a Car) monorepo.\n\n`;
 
-    // Automatically include CRAC rules if reader is available
-    if (this.agentRulesReader) {
+    // Automatically include CRAC rules if context searcher is available
+    if (this.contextSearcher) {
       try {
-        const rulesResult = this.agentRulesReader.readRules("crac-rules://all");
-        if (
-          rulesResult.contents.length > 0 &&
-          !rulesResult.contents[0].text.startsWith("Error:")
-        ) {
+        const rulesContent = await this.contextSearcher.searchRules(
+          "",
+          [ContentCategory.RULES.CRAC],
+          5
+        );
+        if (rulesContent && rulesContent.trim().length > 0) {
           systemPrompt += `## CRAC Monorepo Rules and Conventions\n\n`;
           systemPrompt += `*The following rules and conventions are MANDATORY and must be followed for all development tasks:*\n\n`;
-          systemPrompt += `${rulesResult.contents[0].text}\n\n`;
+          systemPrompt += `${rulesContent}\n\n`;
           systemPrompt += `---\n\n`;
         }
       } catch (error) {
         // Silently fail if rules cannot be loaded - don't break the prompt
-        console.warn("[PromptBuilder] Failed to load CRAC rules:", error);
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error";
+        console.warn(
+          `[PromptBuilder] Failed to load CRAC rules: ${errorMessage}`
+        );
       }
     }
 

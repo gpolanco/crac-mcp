@@ -9,6 +9,7 @@ import { fileURLToPath } from "url";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { createMcpServer } from "./index.js";
 import { validateEnvVars } from "./core/env.js";
+import { apiKeyAuthMiddleware } from "./core/api-key/middleware.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -53,7 +54,7 @@ app.get("/", (_req: express.Request, res: express.Response) => {
   }
 });
 
-// Health check endpoint
+// Health check endpoint (NO PROTECTION - public endpoint)
 app.get("/health", (_req: express.Request, res: express.Response) => {
   res.json({ status: "ok", service: "crac-mcp" });
 });
@@ -61,45 +62,50 @@ app.get("/health", (_req: express.Request, res: express.Response) => {
 // Create MCP server instance (reused across requests)
 const mcpServer = createMcpServer();
 
-// MCP endpoint
-app.all("/mcp", async (req: express.Request, res: express.Response) => {
-  // In stateless mode, create a new transport for each request to prevent
-  // request ID collisions. Different clients may use the same JSON-RPC request IDs,
-  // which would cause responses to be routed to the wrong HTTP connections if
-  // the transport state is shared.
+// MCP endpoint - PROTECTED with API key authentication
+app.all(
+  "/mcp",
+  apiKeyAuthMiddleware,
+  async (req: express.Request, res: express.Response) => {
+    // In stateless mode, create a new transport for each request to prevent
+    // request ID collisions. Different clients may use the same JSON-RPC request IDs,
+    // which would cause responses to be routed to the wrong HTTP connections if
+    // the transport state is shared.
 
-  try {
-    const transport = new StreamableHTTPServerTransport({
-      sessionIdGenerator: undefined, // Stateless mode
-      enableJsonResponse: true,
-    });
-
-    res.on("close", () => {
-      transport.close();
-    });
-
-    await mcpServer.connect(transport);
-    await transport.handleRequest(req, res, req.body);
-  } catch (error) {
-    console.error("Error handling MCP request:", error);
-    if (!res.headersSent) {
-      res.status(500).json({
-        jsonrpc: "2.0",
-        error: {
-          code: -32603,
-          message: "Internal server error",
-        },
-        id: null,
+    try {
+      const transport = new StreamableHTTPServerTransport({
+        sessionIdGenerator: undefined, // Stateless mode
+        enableJsonResponse: true,
       });
+
+      res.on("close", () => {
+        transport.close();
+      });
+
+      await mcpServer.connect(transport);
+      await transport.handleRequest(req, res, req.body);
+    } catch (error) {
+      console.error("Error handling MCP request:", error);
+      if (!res.headersSent) {
+        res.status(500).json({
+          jsonrpc: "2.0",
+          error: {
+            code: -32603,
+            message: "Internal server error",
+          },
+          id: null,
+        });
+      }
     }
   }
-});
+);
 
 const PORT = parseInt(process.env.PORT || "3000", 10);
 
 app
   .listen(PORT, () => {
     console.log(`MCP Server running on http://localhost:${PORT}/mcp`);
+    console.log(`API key authentication: ENABLED`);
   })
   .on("error", (error: Error) => {
     console.error("Server error:", error);

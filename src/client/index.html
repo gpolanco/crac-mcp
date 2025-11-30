@@ -237,12 +237,36 @@
         <!-- Configuration -->
         <section>
           <h2>Configuración</h2>
+
+          <!-- API Key Configuration -->
+          <div
+            class="item"
+            style="
+              background: #fff3cd;
+              border-color: #ffc107;
+              margin-bottom: 24px;
+            "
+          >
+            <h3 style="color: #856404">
+              🔐 Autenticación con API Key (Requerida)
+            </h3>
+            <p style="color: #856404; margin-bottom: 16px">
+              El servidor MCP requiere una API key válida para acceder.
+              Configura tu API key en los headers de las requests.
+            </p>
+            <p style="color: #856404; margin-bottom: 16px">
+              <strong>Formato de API key:</strong>
+              <code>rag_[prefix]_[unique_identifier]</code><br />
+              Ejemplo: <code>rag_live_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6</code>
+            </p>
+          </div>
+
           <div class="tabs-container">
             <div class="tab-content active" style="display: block">
-              <h3>Cursor</h3>
+              <h3>Cursor con API Key</h3>
               <p>
                 Agrega la siguiente configuración a tu archivo de configuración
-                de MCP en Cursor.
+                de MCP en Cursor. Incluye tu API key en los headers.
               </p>
               <div class="code-block">
                 <div class="code-header">
@@ -256,17 +280,96 @@
   "mcpServers": {
     "crac": {
       "url": "https://crac-mcp-production.up.railway.app/mcp",
-      "type": "http"
+      "type": "http",
+      "headers": {
+        "Authorization": "Bearer rag_live_TU_API_KEY_AQUI"
+      }
     }
   }
 }</code></pre>
                 </div>
               </div>
+              <p style="font-size: 13px; color: #888; margin-top: 16px">
+                <strong>Alternativa:</strong> También puedes usar el header
+                <code>X-API-Key</code>:
+              </p>
+              <div class="code-block">
+                <div class="code-header">
+                  <span>Alternativa con X-API-Key</span>
+                  <button
+                    class="copy-button"
+                    onclick="copyCode('cursor-code-alt')"
+                  >
+                    Copiar
+                  </button>
+                </div>
+                <div class="code-content">
+                  <pre id="cursor-code-alt"><code>{
+  "mcpServers": {
+    "crac": {
+      "url": "https://crac-mcp-production.up.railway.app/mcp",
+      "type": "http",
+      "headers": {
+        "X-API-Key": "rag_live_TU_API_KEY_AQUI"
+      }
+    }
+  }
+}</code></pre>
+                </div>
+              </div>
+              <p style="font-size: 13px; color: #888; margin-top: 16px">
+                <strong>Nota:</strong> Reemplaza
+                <code>rag_live_TU_API_KEY_AQUI</code> con tu API key real.
+              </p>
               <p style="font-size: 13px; color: #888">
                 Ubicación del archivo: <code>~/.cursor/mcp.json</code> o en la
                 configuración de Cursor Settings.
               </p>
             </div>
+          </div>
+
+          <!-- Other Clients -->
+          <div class="item" style="margin-top: 24px">
+            <h3>Otros Clientes MCP</h3>
+            <p style="margin-bottom: 16px">
+              Si usas otro cliente MCP, asegúrate de incluir la API key en cada
+              request usando uno de estos headers:
+            </p>
+            <div class="code-block">
+              <div class="code-header">
+                <span>Header: Authorization Bearer</span>
+                <button class="copy-button" onclick="copyCode('header-auth')">
+                  Copiar
+                </button>
+              </div>
+              <div class="code-content">
+                <pre
+                  id="header-auth"
+                ><code>Authorization: Bearer rag_live_TU_API_KEY_AQUI</code></pre>
+              </div>
+            </div>
+            <div class="code-block" style="margin-top: 12px">
+              <div class="code-header">
+                <span>Header: X-API-Key</span>
+                <button class="copy-button" onclick="copyCode('header-xkey')">
+                  Copiar
+                </button>
+              </div>
+              <div class="code-content">
+                <pre
+                  id="header-xkey"
+                ><code>X-API-Key: rag_live_TU_API_KEY_AQUI</code></pre>
+              </div>
+            </div>
+            <p style="font-size: 13px; color: #888; margin-top: 16px">
+              <strong>Validaciones:</strong><br />
+              • La API key debe tener el formato correcto (<code
+                >rag_live_...</code
+              >
+              o <code>rag_test_...</code>)<br />
+              • La API key debe estar activa en la base de datos<br />
+              • La API key no debe haber expirado (si tiene fecha de expiración)
+            </p>
           </div>
         </section>
 
@@ -287,9 +390,10 @@
           <div class="item">
             <h3>get_crac_rules <span class="badge">⭐ Auto-detect</span></h3>
             <p>
-              Obtiene las reglas y convenciones del monorepo CRAC basándose en el
-              contexto proporcionado. El tool detecta automáticamente qué reglas
-              son relevantes (testing, estructura, endpoints, estilo de código).
+              Obtiene las reglas y convenciones del monorepo CRAC basándose en
+              el contexto proporcionado. El tool detecta automáticamente qué
+              reglas son relevantes (testing, estructura, endpoints, estilo de
+              código).
             </p>
             <p style="margin-top: 12px; font-size: 13px; color: #888">
               <strong>Detección automática:</strong><br />
@@ -308,9 +412,10 @@
               usuarios"}
             </div>
             <p style="margin-top: 12px; font-size: 13px; color: #888">
-              <strong>Nota:</strong> El agente debe usar este tool automáticamente
-              cuando detecte que necesita entender las convenciones CRAC. El tool
-              está diseñado para ser llamado proactivamente por el agente.
+              <strong>Nota:</strong> El agente debe usar este tool
+              automáticamente cuando detecte que necesita entender las
+              convenciones CRAC. El tool está diseñado para ser llamado
+              proactivamente por el agente.
             </p>
           </div>
         </section>

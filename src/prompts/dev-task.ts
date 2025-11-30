@@ -78,7 +78,10 @@ export function registerDevTaskPrompt(
           hasTechnology || hasStructure || hasConventions || hasExamples;
 
         // Build structured prompt
-        const structuredPrompt = promptBuilder.buildPrompt(parsed, ragContext);
+        const structuredPrompt = await promptBuilder.buildPrompt(
+          parsed,
+          ragContext
+        );
 
         // Add RAG status indicator to prompt (for debugging/verification)
         // Make it very visible at the top of the prompt

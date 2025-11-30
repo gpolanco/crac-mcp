@@ -42,7 +42,7 @@ export function registerGetCracRulesTool(server: McpServer): void {
     },
     async (args: any) => {
       const { context } = args || {};
-      const result = provider.getRules(context);
+      const result = await provider.getRules(context);
 
       // Format response with metadata
       let response = `## CRAC Rules - ${result.description}\n\n`;
