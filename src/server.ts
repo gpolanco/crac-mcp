@@ -3,9 +3,15 @@ import "dotenv/config";
 
 import express from "express";
 import cors from "cors";
+import { readFileSync } from "fs";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { createMcpServer } from "./index.js";
 import { validateEnvVars } from "./core/env.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Validate environment variables on startup
 try {
@@ -26,6 +32,26 @@ app.use(
 );
 
 app.use(express.json());
+
+// Home page endpoint - serve HTML from client folder
+app.get("/", (_req: express.Request, res: express.Response) => {
+  try {
+    // Try dist/client first (production), then src/client (development)
+    let htmlPath = join(__dirname, "client", "index.html");
+    try {
+      readFileSync(htmlPath, "utf-8");
+    } catch {
+      // If not in dist, try src (for development with tsx)
+      htmlPath = join(process.cwd(), "src", "client", "index.html");
+    }
+    const html = readFileSync(htmlPath, "utf-8");
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.send(html);
+  } catch (error) {
+    console.error("Error reading HTML file:", error);
+    res.status(500).send("Error loading page");
+  }
+});
 
 // Health check endpoint
 app.get("/health", (_req: express.Request, res: express.Response) => {
