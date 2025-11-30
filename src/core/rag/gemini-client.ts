@@ -70,3 +70,4 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     throw new Error("Failed to generate embedding: Unknown error");
   }
 }
+

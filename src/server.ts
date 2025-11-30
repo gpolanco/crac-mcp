@@ -5,7 +5,7 @@ import express from "express";
 import cors from "cors";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { createMcpServer } from "./index.js";
-import { validateEnvVars } from "./lib/env.js";
+import { validateEnvVars } from "./core/env.js";
 
 // Validate environment variables on startup
 try {

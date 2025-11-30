@@ -243,6 +243,7 @@ Generates context-aware development prompts using RAG (Retrieval-Augmented Gener
 **Output:**
 
 Returns a structured prompt with:
+
 - System context (monorepo structure, conventions, principles)
 - Technical context from RAG search
 - Project structure from RAG search
@@ -262,3 +263,40 @@ Returns a structured prompt with:
 ## License
 
 ISC
+
+## A mejorar
+
+### contexto adaptado a la aplicación o scope
+
+En algunas aplicaciones del monorepo tenemos contextos que son muy específicos para la aplicación. Tenemos aplicaciones con nextjs y con vite que algunas tienen nomenclaturas y tecnologías distintas, por eso en su readme hemos agregado contexto especifico. Este contexto lo tendremos también en el rag context searcher.
+
+### Tareas
+
+Implementa tarea por tarea y no todo a la vez.
+Cada vez que termines una tarea, actualiza el archivo de tareas con la tarea completada (si existe).
+Espera la confirmación del usuario para continuar con la siguiente tarea.
+
+### Tests
+
+Tenemos que indicarle la nomenclatura a utilizar en los unit tests.
+Para los mocks usar los mocks que tenemos en el paquete @crac/fake-api. Si no existe un mock crearlo con datos de pruebas.
+
+Intentar evitar warnings de act warnings.
+Evitar complejidades innecesarias en el código de los tests.
+Si en la feature usamos servicios hay que hacer los mocks para evitar llamadas reales.
+Como mínimo lleva los test a un 80% de cobertura.
+
+### Code style
+
+Usamos siempre que sea posible import con aliases
+
+X no a agregado la nueva feature en el menu
+x ha implementado algunos test muy complejos
+x Ha intentado ejecutar todos los test de la aplicación en vez de los de la feature
+x en los test no ha utilizado @crac/fake-api para los mocks
+x ha dejado muchos test con errores de tipos y eslint
+x ha utilizado mal los handlers. En un formulario ha agregado el submit inline en vez de en el handler.
+x Ha creado carpetas vacías, porque lo ponía el contexto. Debería crearlas solo si le hacen falta archivos de ese tipo
+x Renombra propiedades sin sentido. Ejemplo `const { delete: deleteRequest, save, roles, permissions: permissionsList, role: roleFromState } = useRoleSelector();` debería de usar las que retorna el hook a como norma general
+x quizás deberíamos pedirle al agente que le pregunte al usuario ciertas decisiones que debe de tomar y con eso ya que genere las tareas. Por ejemplo: Que rol tendrá esta sección? Agrego la sección al menu o dashboard?
+x ha creado una sola página y las distintas rutas la ha implementado condicionando el path para mostrar una cosa u otra.

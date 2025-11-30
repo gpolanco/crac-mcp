@@ -124,3 +124,4 @@ export function parseCommand(command: string): ParsedCommand {
     raw: normalized,
   };
 }
+
