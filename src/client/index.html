@@ -283,6 +283,36 @@
             <h3>get_info</h3>
             <p>Retorna información genérica del servidor MCP</p>
           </div>
+
+          <div class="item">
+            <h3>get_crac_rules <span class="badge">⭐ Auto-detect</span></h3>
+            <p>
+              Obtiene las reglas y convenciones del monorepo CRAC basándose en el
+              contexto proporcionado. El tool detecta automáticamente qué reglas
+              son relevantes (testing, estructura, endpoints, estilo de código).
+            </p>
+            <p style="margin-top: 12px; font-size: 13px; color: #888">
+              <strong>Detección automática:</strong><br />
+              • "implementa los test de X" → Reglas de testing<br />
+              • "crea la estructura de Y" → Reglas de estructura<br />
+              • "implementa el servicio Z" → Reglas de endpoints<br />
+              • "crea un componente" → Reglas de code style
+            </p>
+            <div class="example">
+              <div class="example-title">Ejemplos de uso:</div>
+              get_crac_rules con: {"context": "implementa los test de
+              EmailService"}<br />
+              get_crac_rules con: {"context": "crea la estructura para un nuevo
+              módulo roles"}<br />
+              get_crac_rules con: {"context": "implementa el servicio de
+              usuarios"}
+            </div>
+            <p style="margin-top: 12px; font-size: 13px; color: #888">
+              <strong>Nota:</strong> El agente debe usar este tool automáticamente
+              cuando detecte que necesita entender las convenciones CRAC. El tool
+              está diseñado para ser llamado proactivamente por el agente.
+            </p>
+          </div>
         </section>
 
         <!-- Prompts Section -->
@@ -344,11 +374,10 @@
         <!-- Resources Section -->
         <section>
           <h2>Resources</h2>
-
-          <div class="item">
-            <h3>hello-world-history</h3>
-            <p>The origin story of the famous 'Hello, World' program</p>
-          </div>
+          <p style="color: #888; font-size: 14px; margin-bottom: 16px">
+            Los resources están deshabilitados. Se utilizan tools en su lugar
+            para mejor descubrimiento automático por parte del agente.
+          </p>
         </section>
       </div>
 

@@ -7,7 +7,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc && chmod 755 dist/server.js && cp -r src/client dist/client",
+    "build": "tsc && chmod 755 dist/server.js && cp -r src/client dist/client && cp -r docs dist/docs",
     "start": "node dist/server.js",
     "test:types": "tsc --noEmit"
   },

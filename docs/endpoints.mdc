@@ -1,0 +1,229 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Guía de implementación de endpoints API
+
+## Objetivo
+Este documento define las reglas estandarizadas para implementar endpoints basados en el swagger de la API disponible en:
+```
+https://apitest.centauro.net/swagger/v1/swagger.json
+```
+
+## Arquitectura del proyecto
+- **Patrón arquitectónico**: Screaming Architecture
+- **Ubicación de módulos**: `packages/core/src/modules`
+
+## Estructura de módulos
+Cada módulo debe contener **obligatoriamente** los siguientes componentes:
+
+### 1. Archivo de entidad
+- **Contenido**: Definición de la entidad principal del módulo
+- **Ubicación**: `entities/MiModulo`
+- **Propósito**: Representar el modelo de datos central del módulo
+
+### 2. Carpeta de servicios
+- **Contenido principal**:
+  - Archivo que exporta un `enum` con todos los endpoints
+  - Un servicio específico por cada endpoint
+- **Responsabilidad**: Gestionar la comunicación con la API
+
+#### Archivo de endpoints (`MiModuloEndpoints.ts`)
+- Debe exportar un `enum` con todos los endpoints disponibles para el módulo.
+- La nomenclatura de las claves del enum debe ser `SNAKE_CASE` (mayúsculas con guiones bajos).
+- Los valores deben ser las rutas relativas de la API.
+- El formato es el siguiente: `nombreModulo/nombreEndpoint`.
+
+**Ejemplo:**
+```typescript
+export enum MiModuloEndpoints {
+  GET_BY_ID = 'miModulo/getById',
+  GET_ALL = 'miModulo/getAll',
+  INSERT = 'miModulo/insert',
+  MODIFY = 'miModulo/modify',
+  DELETE = 'miModulo/delete'
+  // Otros endpoints...
+}
+```
+
+#### Archivo de servicio individual (`MiModuloOperacionService.ts`)
+Cada endpoint debe tener su propio archivo de servicio.
+
+**Estructura obligatoria:**
+
+1.  **Importaciones**:
+    *   `Api` del módulo compartido (`@crac/core/modules/shared/api`).
+    *   Tipos base: `IServiceBaseParams`, `ServiceResponse` del módulo compartido.
+    *   La interfaz de la entidad principal del módulo (`IMiModulo` desde `entities/MiModulo.ts`).
+    *   El `enum` de endpoints del módulo (`MiModuloEndpoints` desde `./MiModuloEndpoints.ts`).
+
+2.  **Interfaz de parámetros**:
+    *   Debe extender `IServiceBaseParams`.
+    *   Nombrada siguiendo el patrón `IMiModuloOperacionParams`.
+    *   Debe incluir todos los parámetros específicos requeridos por el endpoint. Usar propiedades opcionales (`?`) para parámetros no obligatorios.
+
+3.  **Función del servicio**:
+    *   Nombrada en `camelCase` siguiendo el patrón `miModuloOperacionService`.
+    *   Debe recibir un único argumento `model` tipado con la interfaz de parámetros definida anteriormente.
+    *   Debe retornar una `Promise<ServiceResponse<TipoDeRespuesta>>`, donde `TipoDeRespuesta` es el tipo esperado en el cuerpo de la respuesta exitosa (usualmente la interfaz de la entidad o un array de ellas).
+    *   Utilizar el método de `Api` apropiado (`get`, `post`, `put`, `delete`, etc.).
+    *   Pasar los tipos genéricos correctos al método de `Api`: `Api.metodo<TipoDeRespuesta, TipoDeParametros>(...)`.
+    *   Referenciar el endpoint específico desde el `enum` `MiModuloEndpoints`.
+
+4.  **Documentación (JSDoc)**:
+    *   Un bloque JSDoc debe preceder a la función del servicio.
+    *   Debe incluir una descripción clara del propósito de la operación en inglés.
+    *   Debe incluir una etiqueta `@return` describiendo el tipo de la promesa y la respuesta envuelta (`Promise<ServiceResponse<TipoDeRespuesta>>`).
+
+**Ejemplo completo (`ApprovalFlowGetByIdService.ts`):**
+```typescript
+import { Api } from '@crac/core/modules/shared/api';
+import type { IServiceBaseParams } from '@crac/core/modules/shared/types/ServiceBaseParams';
+import type { ServiceResponse } from '@crac/core/modules/shared/types/ServiceResponse';
+import type { IApprovalFlow } from '@crac/core/modules/workshop/approvalFlow/entities/ApprovalFlow';
+import { ApprovalFlowEndpoints } from '@crac/core/modules/workshop/approvalFlow/services/ApprovalFlowEndpoints';
+
+export interface IApprovalFlowGetByIdParams extends IServiceBaseParams {
+	id: IApprovalFlow['id'];
+}
+
+/**
+ * Get approval flow by id
+ * @return {Promise<ServiceResponse<IApprovalFlow>>} `ServiceResponse<IApprovalFlow>`
+ */
+export const approvalFlowGetByIdService = (
+	model: IApprovalFlowGetByIdParams,
+): Promise<ServiceResponse<IApprovalFlow>> => {
+	return Api.get<IApprovalFlow, IApprovalFlowGetByIdParams>(ApprovalFlowEndpoints.GET_BY_ID, model);
+};
+```
+
+## Convenciones de implementación
+1.  **Mapeo de endpoints**: Cada endpoint definido en el `enum` debe tener su correspondiente archivo y función de servicio.
+2.  **Coherencia nomenclatura**: Mantener estricta coherencia entre los nombres de archivos, interfaces, funciones y endpoints.
+3.  **Tipado**: Utilizar interfaces y tipos específicos del módulo para parámetros y respuestas. Aprovechar el tipado genérico de la clase `Api`.
+4.  **Exportación**: Cada servicio debe exportarse individualmente desde su archivo. No es necesario un archivo índice (`index.ts`) para la carpeta `services`.
+
+### 3. Carpeta de estado
+- **Contenido**:
+  - Acciones Redux (ubicadas en subcarpeta `actions`)
+  - Definición del tipo del estado del reducer (en subcarpeta `stateType`)
+- **Propósito**: Manejar el estado global del módulo
+
+#### Archivo de acciones (`MiModuloActions.ts`)
+- **Ubicación**: `state/actions/MiModuloActions.ts`
+- **Responsabilidad**: Definir todas las acciones síncronas y asíncronas relacionadas con el estado del módulo y las interacciones con la API.
+- **Utiliza**: Helpers `createSyncAction` y `createAsyncAction` del módulo compartido.
+
+**Estructura obligatoria:**
+
+1.  **Importaciones**:
+    *   `createSyncAction`, `createAsyncAction` de `@crac/core/modules/shared/state/`.
+    *   Las funciones de servicio correspondientes de la carpeta `services/`.
+    *   Interfaces de entidad (`IMiModulo`), parámetros de servicio (`IMiModuloOperacionParams`), y tipos de respuesta específicos necesarios.
+
+2.  **Acciones síncronas**:
+    *   Utilizar `createSyncAction('miModulo/nombreAccion')`.
+    *   Nombrar la constante exportada en `camelCase`.
+    *   Incluir JSDoc describiendo el propósito de la acción.
+
+3.  **Acciones asíncronas**:
+    *   Utilizar `createAsyncAction<TipoPayload, TipoParams>('miModulo/nombreAccion', funcionServicio)`.
+    *   Nombrar la constante exportada en `camelCase`.
+    *   Especificar los tipos genéricos correctos:
+        *   `TipoPayload`: El tipo de dato que se espera en el `payload` de la acción `fulfilled` (normalmente el tipo de respuesta del servicio). Usar `void` si el servicio no devuelve datos relevantes para el estado.
+        *   `TipoParams`: La interfaz de parámetros que espera la `funcionServicio`.
+    *   Pasar la referencia a la función del servicio correspondiente.
+    *   Incluir JSDoc detallado describiendo la operación, el `payload` esperado y los `params` requeridos.
+
+4.  **Convención de Nomenclatura**:
+    *   Los *tipos* de acción (las cadenas de texto) deben seguir el formato `'miModulo/nombreAccion'`.
+
+5.  **Exportación**:
+    *   Exportar cada acción individualmente.
+
+**Ejemplo (`ApprovalFlowActions.ts`):**
+```typescript
+import { createSyncAction } from '@crac/core/modules/shared/state/createAction';
+import { createAsyncAction } from '@crac/core/modules/shared/state/createAsyncAction';
+// Importaciones de Entidades y Tipos
+import type { IApprovalFlow } from '@crac/core/modules/workshop/approvalFlow/entities/ApprovalFlow';
+import type { IApprovalFlowFile } from '@crac/core/modules/workshop/approvalFlow/types/ApprovalFlowFile';
+// Importaciones de Servicios y sus Parámetros
+import { approvalFlowGetByIdService } from '@crac/core/modules/workshop/approvalFlow/services/ApprovalFlowGetByIdService';
+import type { IApprovalFlowGetByIdParams } from '@crac/core/modules/workshop/approvalFlow/services/ApprovalFlowGetByIdService';
+import { approvalFlowSearchService } from '@crac/core/modules/workshop/approvalFlow/services/ApprovalFlowSearchService';
+import type {
+	IApprovalFlowSearchParams,
+	IApprovalFlowSearchResponse,
+} from '@crac/core/modules/workshop/approvalFlow/services/ApprovalFlowSearchService';
+import { approvalFlowOpenFileService } from '@crac/core/modules/workshop/approvalFlow/services/ApprovalFlowOpenFileService';
+import type { IApprovalFlowOpenFileParams } from '@crac/core/modules/workshop/approvalFlow/services/ApprovalFlowOpenFileService';
+
+
+/**
+ * Clears the approval flow data from the state.
+ */
+export const approvalFlowClear = createSyncAction('approvalFlow/clear');
+
+/**
+ * Searches for approval flows based on search parameters.
+ * @param {IApprovalFlowSearchResponse} payload The payload for the action.
+ * @param {IApprovalFlowSearchParams} params The parameters for retrieving approval flows.
+ * @returns {Promise<void>} A promise that resolves to the search results.
+ */
+export const approvalFlowSearch = createAsyncAction<IApprovalFlowSearchResponse, IApprovalFlowSearchParams>(
+	'approvalFlow/search', // Tipo de acción: 'modulo/accion'
+	approvalFlowSearchService, // Función del servicio
+);
+
+/**
+ * Gets an approval flow by ID.
+ * @param {IApprovalFlow} payload The approval flow to be retrieved.
+ * @param {IApprovalFlowGetByIdParams} params The parameters for retrieving the approval flow.
+ * @returns {Promise<void>} A promise that resolves when the approval flow has been retrieved.
+ */
+export const approvalFlowGetById = createAsyncAction<IApprovalFlow, IApprovalFlowGetByIdParams>(
+	'approvalFlow/getById',
+	approvalFlowGetByIdService,
+);
+
+/**
+ * Opens a file from an approval flow.
+ * @param {void} payload The void payload.
+ * @param {IApprovalFlowOpenFileParams} params The parameters for opening the file.
+ * @returns {Promise<void>} A promise that resolves when the file has been opened.
+ */
+export const approvalFlowOpenFile = createAsyncAction<void, IApprovalFlowOpenFileParams>(
+	'approvalFlow/openFile',
+	approvalFlowOpenFileService,
+);
+
+// ... otras acciones ...
+```
+
+### 4. Carpeta de tipos (opcional)
+- **Contenido**: Interfaces y tipos específicos del módulo
+- **Propósito**: Facilitar el tipado para todo el módulo
+
+## Ejemplo de estructura
+```
+modules/
+  └── miModulo/
+      ├── entities/
+      │   └── MiModulo.ts
+      ├── services/
+      │   ├── MiModuloEndpoints.ts
+      │   ├── MiModuloSearchService.ts
+      │   └── MiModuloInsertService.ts
+      ├── state/
+      │   ├── actions/
+      │   │   └── MiModuloActions.ts
+      │   └── stateType/
+      │       └── MiModuloStateType.ts
+      └── types/
+	      ├── TipoDeEjemploType.ts
+          └── OtroTipoDeEjemploType.ts
+
+```

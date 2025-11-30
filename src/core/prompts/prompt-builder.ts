@@ -5,6 +5,7 @@
 
 import type { ParsedCommand } from "../parser/command-parser.js";
 import type { RAGContext } from "../rag/context-searcher.js";
+import { AgentRulesReader } from "../resources/agent-rules-reader.js";
 
 /**
  * Structured prompt with system and user messages
@@ -28,6 +29,17 @@ export interface StructuredPrompt {
  * Builds structured prompts for development agents with RAG context
  */
 export class PromptBuilder {
+  private agentRulesReader?: AgentRulesReader;
+
+  /**
+   * Sets the agent rules reader for automatic inclusion of CRAC rules
+   *
+   * @param reader - The AgentRulesReader instance
+   */
+  setAgentRulesReader(reader: AgentRulesReader): void {
+    this.agentRulesReader = reader;
+  }
+
   /**
    * Builds a structured prompt from a parsed command and RAG context
    *
@@ -68,6 +80,25 @@ export class PromptBuilder {
     const scopeUpper = command.scope.toUpperCase();
 
     let systemPrompt = `You are an expert Full-Stack Engineer working on the ${scopeUpper} application in the CRAC (Centauro Rent a Car) monorepo.\n\n`;
+
+    // Automatically include CRAC rules if reader is available
+    if (this.agentRulesReader) {
+      try {
+        const rulesResult = this.agentRulesReader.readRules("crac-rules://all");
+        if (
+          rulesResult.contents.length > 0 &&
+          !rulesResult.contents[0].text.startsWith("Error:")
+        ) {
+          systemPrompt += `## CRAC Monorepo Rules and Conventions\n\n`;
+          systemPrompt += `*The following rules and conventions are MANDATORY and must be followed for all development tasks:*\n\n`;
+          systemPrompt += `${rulesResult.contents[0].text}\n\n`;
+          systemPrompt += `---\n\n`;
+        }
+      } catch (error) {
+        // Silently fail if rules cannot be loaded - don't break the prompt
+        console.warn("[PromptBuilder] Failed to load CRAC rules:", error);
+      }
+    }
 
     // Add metadata about the context
     systemPrompt += `**Context Information:**\n`;
@@ -197,17 +228,18 @@ export class PromptBuilder {
 
     // Add specific instructions
     userPrompt += `## Implementation Instructions\n\n`;
+    userPrompt += `**IMPORTANT: Before implementing, you MUST call the \`get_crac_rules\` tool with the task context to get the specific CRAC conventions you need to follow.**\n\n`;
     userPrompt += `Please implement this task following:\n\n`;
-    userPrompt += `1. **Monorepo conventions**: Use the structure and patterns shown in the context above\n`;
-    userPrompt += `2. **Shared packages**: Leverage \`@crac/core\` for business logic and \`@crac/design-system\` for UI components\n`;
-    userPrompt += `3. **Code style**: Follow the naming conventions, import order, and component patterns documented\n`;
-    userPrompt += `4. **Testing**: Include appropriate tests using Jest + React Testing Library\n`;
-    userPrompt += `5. **TypeScript**: Use proper types, avoid \`any\`, use type imports when applicable\n`;
-    userPrompt += `6. **Responsive design**: Ensure mobile-first approach with Tailwind CSS\n\n`;
+    userPrompt += `1. **Get CRAC Rules FIRST**: Call \`get_crac_rules\` tool with the task description to get relevant conventions\n`;
+    userPrompt += `2. **Monorepo conventions**: Use the structure and patterns shown in the context above\n`;
+    userPrompt += `3. **Shared packages**: Leverage \`@crac/core\` for business logic and \`@crac/design-system\` for UI components\n`;
+    userPrompt += `4. **Code style**: Follow the naming conventions, import order, and component patterns documented\n`;
+    userPrompt += `5. **Testing**: Include appropriate tests using Jest + React Testing Library\n`;
+    userPrompt += `6. **TypeScript**: Use proper types, avoid \`any\`, use type imports when applicable\n`;
+    userPrompt += `7. **Responsive design**: Ensure mobile-first approach with Tailwind CSS\n\n`;
     userPrompt += `Pay attention to the metadata (app, scope, distance) in the examples to understand context relevance. `;
     userPrompt += `Lower distance values indicate more relevant examples.\n`;
 
     return userPrompt;
   }
 }
-

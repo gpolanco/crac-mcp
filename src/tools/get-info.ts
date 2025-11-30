@@ -29,8 +29,8 @@ export function registerGetInfoTool(server: McpServer): void {
     },
     async (args: any) => {
       const { section } = args;
-      const tools = ["hello", "get_info"];
-      const resources = ["hello-world-history"];
+      const tools = ["hello", "get_info", "get_crac_rules"];
+      const resources: string[] = []; // Resources disabled, using tools instead
       const prompts = ["greet", "dev_task", "generate_tasks"]; // Updated to snake_case
 
       const info = {

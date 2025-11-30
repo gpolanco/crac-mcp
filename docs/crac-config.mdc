@@ -1,0 +1,174 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+
+---
+
+description: RPC Service boilerplate
+globs:
+alwaysApply: false
+
+---
+
+# 🧠 CRAC Monorepo - Agent Configuration Rules
+
+This document defines the rules and conventions that any agent or contributor must follow when working on Centauro Rent a Car's frontend monorepo.
+
+---
+
+## 📁 Monorepo Structure
+
+- **apps/**: Standalone applications
+  - `web`: Public website (Next.js App Router)
+  - `rac`: Internal intranet (Vite + React)
+  - `partners`: Partner extranet
+  - `mobile`: Mobile app (React Native + Expo)
+- **packages/**: Shared packages
+  - `@crac/core`: Business logic, types, services
+  - `@crac/ui`: UI compone `@crac/components`: Legacy shared components
+  - `@crac/teutilities
+  - `@crac/crac-form`: Form components and helpers
+    Internal CLI
+- **config/**: Shared configuration (ESLint, TS, Prettiehnical documentation)
+
+---
+
+## 🧱 Architecture
+
+- Monorurborepo`
+- Language: `TypeScript`
+- Frameworks: `Reaite`, `React Native`
+- Styling: `Tailwind CSS`ement: `Redux Toolkit` + Context API
+- Testing: `Jest`, `RTL`, `Playwright (web)`
+- CI/CD: GitLab + Git Hooks (Husky, lint-staged)
+- Linting: ESLint (Flat Config) + Prettier
+
+---
+
+## 📀 Code Structure
+
+### Feature-Based Structure
+
+```bash
+src/features/<feature>/
+├── pages/
+├── components/
+├── hooks/
+├── state/
+├── types/
+├── utils/
+└── routes.ts
+```
+
+- `shared/` is allowed within a feature only when strictly necessary.
+
+---
+
+## ✍️ Code Style
+
+### Naming Conventions
+
+- `PascalCase`: Components, interfaces, types, enums
+- `camelCase`: Variables, functions, objects
+- Folders and files:
+  - `camelCase` for non-component files
+  - `PascalCase` for component files
+
+### Components
+
+- Always use **functional components**
+- Use `arrow functions` and `FC` when needed
+- Define props using `interface` and `PropsWithChildren` when applicable
+- Use **named exports**
+- Separate complex logic from JSX
+- Do not use `index` as `key`
+- Use `<>` (fragment) instead of `div`
+- Avoid hardcoded strings → use `const` or `enum`
+- Avoid large components
+
+---
+
+## 🧪 Testing
+
+- Tools: `Jest`, `React Testing Library`, `Playwright (web)`
+- Pattern: AAA (`Arrange`, `Act`, `Assert`)
+- Tests are colocated with the file under test (`.test.ts[x]`)
+- Use `@crac/test-utils` for custom rendering
+- Mocks: use `@crac/fake-api` when applicable
+- Always use `test()` instead of `it()` for consistency
+- Use describe() blocks to group related tests meaningfully:
+  - Group by component or logical unit
+  - Include setup logic inside beforeEach if shared
+- Prefer `findBy` over `getBy` for async elements
+
+---
+
+## 📂 Git & Versioning
+
+### Branches
+
+- Format: `<app>-<type>-<description>`
+  - Example: `rac-feature-booking-calendar`
+- Base branch: `develop`
+- Production branch: `main` (merges only from `develop`)
+
+### Commits
+
+- Follow [Conventional Commits](mdc:https:/www.conventionalcommits.org)
+  - Example: `feat(web): add hero banner`
+  - Validated by `commitlint`
+
+### Merge Requests
+
+- Clear title + detailed description
+- Assign at least one reviewer
+- Use labels: `feature`, `bugfix`, `web`, etc.
+
+---
+
+## 🛠️ Development Rules
+
+- Reuse logic from `@crac/core`
+- Use `@crac/ui` components by default
+- Use `@crac/components` only for legacy code
+- Use custom hooks to separate presentation logic
+- Do not add new dependencies without approval
+- Document complex functions/exports with `TSDoc`
+- Update relevant documentation when changing architecture or shared logic
+- Always use `pnpm` as the package manager.
+  - Use `pnpm add <pkg> --filter <app-or-package>` to add dependencies.
+  - Avoid using `npm` or `yarn`.
+
+---
+
+## 🔪 Running Tests
+
+```bash
+pnpm test                     # All tests
+pnpm test --filter rac        # RAC only
+pnpm test --filter @crac/core # Core only
+pnpm test:e2e --filter web    # Web E2E
+```
+
+---
+
+## 📚 Key Documentation Files
+
+- **@01_INTRODUCTION.md** - Overview of CRAC and the purpose of this monorepo
+- **@02_ARCHITECTURE.md** - Core architecture, structure, and tech stack overview
+- **@03_CORE_PACKAGE.md** - Details about the `@crac/core` package (shared business logic)
+- **@04_APPLICATIONS.md** - Overview of all applications in the monorepo
+- **@05_DEVELOPMENT_WORKFLOW.md** - Branching, commits, and development process
+- **@06_STYLE_GUIDE.md** - Code style standards and conventions
+- **@07_TESTING.md** - Testing strategies and standards
+
+---
+
+## 📌 Final Notes
+
+- `@crac/core` is the business logic core. Shared usage must originate here.
+- The goal is to maintain consistency, reusability, and simplicity.
+- 👉 **Mandatory Reference**: Before performing any task, agents must always refer to the @official monorepo documentation (/docs) to comply with architecture, style, and conventions.
+- is endpoint not exist all services return mocks data, before confirm with the user.
