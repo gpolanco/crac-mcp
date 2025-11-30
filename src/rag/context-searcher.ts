@@ -5,27 +5,35 @@
  * This module only generates embeddings for search queries
  */
 
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { generateEmbedding } from "./gemini-client.js";
 
-if (!process.env.SUPABASE_URL) {
-  throw new Error("Missing SUPABASE_URL environment variable");
-}
+// Lazy initialization to allow dotenv to load first
+let supabase: SupabaseClient | null = null;
 
-if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-  throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY environment variable");
-}
+function getSupabaseClient(): SupabaseClient {
+  if (!supabase) {
+    if (!process.env.SUPABASE_URL) {
+      throw new Error("Missing SUPABASE_URL environment variable");
+    }
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY environment variable");
+    }
+
+    supabase = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
   }
-);
+  return supabase;
+}
 
 /**
  * Search result from Supabase
@@ -70,7 +78,8 @@ async function searchSimilarContexts(
   // Convert embedding array to string format for pgvector
   const embeddingStr = `[${queryEmbedding.join(",")}]`;
 
-  const { data, error } = await supabase.rpc("match_dev_contexts", {
+  const client = getSupabaseClient();
+  const { data, error } = await client.rpc("match_dev_contexts", {
     query_embedding: embeddingStr,
     match_apps: apps,
     match_scopes: scopes || null,
@@ -101,7 +110,8 @@ async function searchSimilarContexts(
  * @returns Promise resolving to true if scope exists and is active, false otherwise
  */
 async function validateScope(scope: string): Promise<boolean> {
-  const { data, error } = await supabase
+  const client = getSupabaseClient();
+  const { data, error } = await client
     .from("dev_apps")
     .select("key, is_active")
     .eq("key", scope)
@@ -121,7 +131,8 @@ async function validateScope(scope: string): Promise<boolean> {
  * @returns Promise resolving to array of active scope keys
  */
 async function getActiveScopes(): Promise<string[]> {
-  const { data, error } = await supabase
+  const client = getSupabaseClient();
+  const { data, error } = await client
     .from("dev_apps")
     .select("key")
     .eq("is_active", true);

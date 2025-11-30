@@ -1,3 +1,6 @@
+// Load environment variables from .env file FIRST, before any other imports
+import "dotenv/config";
+
 import express from "express";
 import cors from "cors";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";

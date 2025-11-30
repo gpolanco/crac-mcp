@@ -5,11 +5,18 @@
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-if (!process.env.GEMINI_API_KEY) {
-  throw new Error("Missing GEMINI_API_KEY environment variable");
-}
+// Lazy initialization to allow dotenv to load first
+let genAI: GoogleGenerativeAI | null = null;
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+function getGenAI(): GoogleGenerativeAI {
+  if (!genAI) {
+    if (!process.env.GEMINI_API_KEY) {
+      throw new Error("Missing GEMINI_API_KEY environment variable");
+    }
+    genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  }
+  return genAI;
+}
 
 /**
  * Gemini embedding model: text-embedding-004 produces 768-dimensional vectors
@@ -37,7 +44,8 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   }
 
   try {
-    const model = genAI.getGenerativeModel({ model: EMBEDDING_MODEL });
+    const ai = getGenAI();
+    const model = ai.getGenerativeModel({ model: EMBEDDING_MODEL });
 
     // For embedding models, we use embedContent with a string
     const result = await model.embedContent(text);
