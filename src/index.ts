@@ -188,19 +188,49 @@ export function createMcpServer(): McpServer {
         console.log(`[MCP] Parsed command:`, parsed);
 
         // Search context using RAG (invisible to user)
+        console.log(
+          `[MCP] Starting RAG context search for scope: ${parsed.scope}, tool: ${parsed.tool}`
+        );
         const ragContext = await contextSearcher.searchContext(
           parsed.requirements,
           parsed.scope,
           parsed.tool
         );
 
+        // Check if RAG found context
+        const hasTechnology = ragContext.technology.trim().length > 0;
+        const hasStructure = ragContext.folderStructure.trim().length > 0;
+        const hasConventions = ragContext.conventions.trim().length > 0;
+        const hasExamples = ragContext.examples.trim().length > 0;
+        const ragFoundContext =
+          hasTechnology || hasStructure || hasConventions || hasExamples;
+
+        console.log(`[MCP] RAG context search completed:`);
+        console.log(`[MCP]   - Technology: ${hasTechnology ? "✓" : "✗"}`);
+        console.log(`[MCP]   - Structure: ${hasStructure ? "✓" : "✗"}`);
+        console.log(`[MCP]   - Conventions: ${hasConventions ? "✓" : "✗"}`);
+        console.log(`[MCP]   - Examples: ${hasExamples ? "✓" : "✗"}`);
+        console.log(
+          `[MCP]   - RAG found context: ${
+            ragFoundContext ? "YES" : "NO (using fallbacks)"
+          }`
+        );
+
         // Build structured prompt
         const structuredPrompt = promptBuilder.buildPrompt(parsed, ragContext);
+
+        // Add RAG status indicator to prompt (for debugging/verification)
+        let ragStatusNote = "";
+        if (ragFoundContext) {
+          ragStatusNote = `\n\n[✅ RAG Context Loaded] This prompt includes context retrieved from the monorepo documentation using semantic search.\n`;
+        } else {
+          ragStatusNote = `\n\n[⚠️ RAG Context Not Found] Using default fallback context. Make sure embeddings are available in Supabase for scope "${parsed.scope}".\n`;
+        }
 
         // Return prompt ready for agent
         // Note: MCP prompts only support "user" or "assistant" roles
         // Combine system and user prompts into a single user message
-        const combinedPrompt = `${structuredPrompt.system}\n\n---\n\n${structuredPrompt.user}`;
+        const combinedPrompt = `${structuredPrompt.system}${ragStatusNote}\n\n---\n\n${structuredPrompt.user}`;
 
         return {
           messages: [
