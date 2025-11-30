@@ -3,6 +3,8 @@ import { z } from "zod";
 import { parseCommand } from "./parser/command-parser.js";
 import { ContextSearcher } from "./rag/context-searcher.js";
 import { PromptBuilder } from "./prompts/prompt-builder.js";
+import { TemplateSearcher } from "./rag/template-searcher.js";
+import { TaskGeneratorBuilder } from "./prompts/task-generator-builder.js";
 
 const inputSchema = z.object({
   name: z.string().describe("Name to greet"),
@@ -17,6 +19,8 @@ export function createMcpServer(): McpServer {
   // Initialize RAG components
   const contextSearcher = new ContextSearcher();
   const promptBuilder = new PromptBuilder();
+  const templateSearcher = new TemplateSearcher();
+  const taskGeneratorBuilder = new TaskGeneratorBuilder();
 
   // Add a tool
   server.registerTool(
@@ -58,7 +62,7 @@ export function createMcpServer(): McpServer {
       const { section } = args;
       const tools = ["hello", "get-info"];
       const resources = ["hello-world-history"];
-      const prompts = ["greet", "dev-task"];
+      const prompts = ["greet", "dev-task", "generate-tasks"];
 
       const info = {
         server: {
@@ -255,6 +259,128 @@ export function createMcpServer(): McpServer {
           errorMessage.includes("Invalid supabaseUrl");
 
         let errorText = `Error generating context-aware prompt: ${errorMessage}\n\n`;
+
+        if (isEnvError) {
+          errorText += `\n═══════════════════════════════════════════════════════════\n`;
+          errorText += `⚠️ CONFIGURATION ERROR\n`;
+          errorText += `═══════════════════════════════════════════════════════════\n`;
+          errorText += `The MCP server is missing required environment variables.\n\n`;
+          errorText += `Please ensure the following are set:\n`;
+          errorText += `- SUPABASE_URL (e.g., https://your-project.supabase.co)\n`;
+          errorText += `- SUPABASE_SERVICE_ROLE_KEY\n`;
+          errorText += `- GEMINI_API_KEY\n\n`;
+          errorText += `If running locally, create a .env file in the crac-mcp directory.\n`;
+          errorText += `If running on Railway, set these in the Railway dashboard.\n`;
+          errorText += `═══════════════════════════════════════════════════════════\n`;
+        }
+
+        return {
+          messages: [
+            {
+              role: "user",
+              content: {
+                type: "text",
+                text: errorText,
+              },
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  // Add generate-tasks prompt with RAG and template integration
+  server.registerPrompt(
+    "generate-tasks",
+    {
+      title: "Generate Tasks",
+      description:
+        "Generate structured task documentation (PRD → Tasks → Subtasks) using templates and RAG context. Searches for templates and monorepo context to create a complete markdown document.",
+      argsSchema: {
+        command: z
+          .string()
+          .describe(
+            "Command in natural language. Examples: 'generate-tasks partners nueva sección settings', 'gen-tasks rac implementar buscador de reservas'"
+          ),
+      },
+    },
+    async (args: any) => {
+      try {
+        const { command } = args;
+
+        if (!command || command.trim().length === 0) {
+          return {
+            messages: [
+              {
+                role: "user",
+                content: {
+                  type: "text",
+                  text: "Error: Command cannot be empty. Please provide a command for task generation.",
+                },
+              },
+            ],
+          };
+        }
+
+        // Parse command
+        const parsed = parseCommand(command);
+
+        // Normalize tool name for generate-tasks variations
+        const lowerTool = parsed.tool.toLowerCase();
+        if (
+          lowerTool === "generate-tasks" ||
+          lowerTool === "gen-tasks" ||
+          lowerTool === "generate" ||
+          lowerTool === "gen"
+        ) {
+          parsed.tool = "generate-tasks";
+        }
+
+        // Search templates and context in parallel
+        const [templates, ragContext] = await Promise.all([
+          templateSearcher.searchTemplates(),
+          contextSearcher.searchContext(
+            parsed.requirements,
+            parsed.scope,
+            parsed.tool
+          ),
+        ]);
+
+        // Build task generation prompt
+        const taskPrompt = taskGeneratorBuilder.buildTaskGenerationPrompt(
+          parsed,
+          templates,
+          ragContext
+        );
+
+        // Return prompt ready for agent
+        return {
+          messages: [
+            {
+              role: "user",
+              content: {
+                type: "text",
+                text: taskPrompt.prompt,
+              },
+            },
+          ],
+        };
+      } catch (error) {
+        console.error("[MCP] Error in generate-tasks prompt:", error);
+
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Unknown error occurred while generating task prompt";
+
+        // Check if it's an environment variable error
+        const isEnvError =
+          errorMessage.includes("SUPABASE_URL") ||
+          errorMessage.includes("SUPABASE_SERVICE_ROLE_KEY") ||
+          errorMessage.includes("GEMINI_API_KEY") ||
+          errorMessage.includes("Invalid supabaseUrl");
+
+        let errorText = `Error generating task prompt: ${errorMessage}\n\n`;
 
         if (isEnvError) {
           errorText += `\n═══════════════════════════════════════════════════════════\n`;

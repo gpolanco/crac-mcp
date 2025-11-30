@@ -22,6 +22,7 @@ export interface ParsedCommand {
  * Case-insensitive matching
  */
 const TOOL_PATTERNS = [
+  /^(generate-tasks|gen-tasks|generate|gen)\s+/i,
   /^(dev|develop|implement|create|add|build)\s+/i,
   /^(test|testing)\s+/i,
   /^(refactor|refactoring)\s+/i,

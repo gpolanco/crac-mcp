@@ -81,7 +81,7 @@ export interface RAGContext {
  * @returns Promise resolving to array of SearchResult objects
  * @throws Error if the RPC function call fails
  */
-async function searchSimilarContexts(
+export async function searchSimilarContexts(
   queryEmbedding: number[],
   apps: string[],
   scopes?: string[],
