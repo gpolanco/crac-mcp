@@ -13,24 +13,36 @@ let supabase: SupabaseClient | null = null;
 
 function getSupabaseClient(): SupabaseClient {
   if (!supabase) {
-    if (!process.env.SUPABASE_URL) {
-      throw new Error("Missing SUPABASE_URL environment variable");
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || supabaseUrl.trim().length === 0) {
+      throw new Error(
+        "Missing SUPABASE_URL environment variable. Please set it in your .env file or environment."
+      );
     }
 
-    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY environment variable");
+    if (!supabaseKey || supabaseKey.trim().length === 0) {
+      throw new Error(
+        "Missing SUPABASE_SERVICE_ROLE_KEY environment variable. Please set it in your .env file or environment."
+      );
     }
 
-    supabase = createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
+    // Validate URL format
+    try {
+      new URL(supabaseUrl);
+    } catch (error) {
+      throw new Error(
+        `Invalid SUPABASE_URL format: "${supabaseUrl}". Must be a valid HTTP or HTTPS URL (e.g., https://your-project.supabase.co)`
+      );
+    }
+
+    supabase = createClient(supabaseUrl, supabaseKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
   }
   return supabase;
 }

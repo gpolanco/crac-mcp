@@ -220,17 +220,40 @@ export function createMcpServer(): McpServer {
         const structuredPrompt = promptBuilder.buildPrompt(parsed, ragContext);
 
         // Add RAG status indicator to prompt (for debugging/verification)
-        let ragStatusNote = "";
+        // Make it very visible at the top of the prompt
+        let ragStatusHeader = "";
         if (ragFoundContext) {
-          ragStatusNote = `\n\n[✅ RAG Context Loaded] This prompt includes context retrieved from the monorepo documentation using semantic search.\n`;
+          ragStatusHeader = `\n\n═══════════════════════════════════════════════════════════\n`;
+          ragStatusHeader += `✅ RAG CONTEXT LOADED SUCCESSFULLY\n`;
+          ragStatusHeader += `═══════════════════════════════════════════════════════════\n`;
+          ragStatusHeader += `This prompt includes context retrieved from the monorepo documentation using semantic search.\n`;
+          ragStatusHeader += `- Technology context: ${
+            hasTechnology ? "✓ Found" : "✗ Not found"
+          }\n`;
+          ragStatusHeader += `- Structure context: ${
+            hasStructure ? "✓ Found" : "✗ Not found"
+          }\n`;
+          ragStatusHeader += `- Conventions context: ${
+            hasConventions ? "✓ Found" : "✗ Not found"
+          }\n`;
+          ragStatusHeader += `- Examples context: ${
+            hasExamples ? "✓ Found" : "✗ Not found"
+          }\n`;
+          ragStatusHeader += `═══════════════════════════════════════════════════════════\n\n`;
         } else {
-          ragStatusNote = `\n\n[⚠️ RAG Context Not Found] Using default fallback context. Make sure embeddings are available in Supabase for scope "${parsed.scope}".\n`;
+          ragStatusHeader = `\n\n═══════════════════════════════════════════════════════════\n`;
+          ragStatusHeader += `⚠️ RAG CONTEXT NOT FOUND - USING FALLBACKS\n`;
+          ragStatusHeader += `═══════════════════════════════════════════════════════════\n`;
+          ragStatusHeader += `No context was found in Supabase for scope "${parsed.scope}".\n`;
+          ragStatusHeader += `Using default fallback context. Make sure embeddings are available in Supabase.\n`;
+          ragStatusHeader += `═══════════════════════════════════════════════════════════\n\n`;
         }
 
         // Return prompt ready for agent
         // Note: MCP prompts only support "user" or "assistant" roles
         // Combine system and user prompts into a single user message
-        const combinedPrompt = `${structuredPrompt.system}${ragStatusNote}\n\n---\n\n${structuredPrompt.user}`;
+        // Put RAG status at the very beginning so it's immediately visible
+        const combinedPrompt = `${ragStatusHeader}${structuredPrompt.system}\n\n---\n\n${structuredPrompt.user}`;
 
         return {
           messages: [
@@ -251,13 +274,36 @@ export function createMcpServer(): McpServer {
             ? error.message
             : "Unknown error occurred while generating prompt";
 
+        // Check if it's an environment variable error
+        const isEnvError =
+          errorMessage.includes("SUPABASE_URL") ||
+          errorMessage.includes("SUPABASE_SERVICE_ROLE_KEY") ||
+          errorMessage.includes("GEMINI_API_KEY") ||
+          errorMessage.includes("Invalid supabaseUrl");
+
+        let errorText = `Error generating context-aware prompt: ${errorMessage}\n\n`;
+
+        if (isEnvError) {
+          errorText += `\n═══════════════════════════════════════════════════════════\n`;
+          errorText += `⚠️ CONFIGURATION ERROR\n`;
+          errorText += `═══════════════════════════════════════════════════════════\n`;
+          errorText += `The MCP server is missing required environment variables.\n\n`;
+          errorText += `Please ensure the following are set:\n`;
+          errorText += `- SUPABASE_URL (e.g., https://your-project.supabase.co)\n`;
+          errorText += `- SUPABASE_SERVICE_ROLE_KEY\n`;
+          errorText += `- GEMINI_API_KEY\n\n`;
+          errorText += `If running locally, create a .env file in the crac-mcp directory.\n`;
+          errorText += `If running on Railway, set these in the Railway dashboard.\n`;
+          errorText += `═══════════════════════════════════════════════════════════\n`;
+        }
+
         return {
           messages: [
             {
               role: "user",
               content: {
                 type: "text",
-                text: `Error generating context-aware prompt: ${errorMessage}`,
+                text: errorText,
               },
             },
           ],
