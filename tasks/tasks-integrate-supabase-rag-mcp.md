@@ -54,17 +54,17 @@ Update the file after completing each sub-task, not just after completing an ent
 - [x] 1.6 Add validation call in server.ts or index.ts to validate env vars on startup
 - [x] 1.7 Test that server fails gracefully with clear error message if env vars are missing
 
-- [ ] 2.0 Implement command parser
-- [ ] 2.1 Create `src/parser/command-parser.ts` file
-- [ ] 2.2 Define `ParsedCommand` interface with tool, scope, requirements, and raw fields
-- [ ] 2.3 Implement tool pattern matching (dev, test, refactor, fix, update and variants) - case insensitive
-- [ ] 2.4 Implement scope pattern matching (rac, partners, global, web, mobile, suppliers, notifications, queues) - case insensitive
-- [ ] 2.5 Implement `parseCommand` function that extracts tool, scope, and requirements from natural language
-- [ ] 2.6 Add default values: tool="dev", scope="global" if not detected
-- [ ] 2.7 Handle commands without explicit tool or scope
-- [ ] 2.8 Export `parseCommand` function and `ParsedCommand` type
-- [ ] 2.9 Add JSDoc documentation for the parseCommand function
-- [ ] 2.10 Test parser with various command formats (with/without tool, with/without scope, case variations)
+- [x] 2.0 Implement command parser
+- [x] 2.1 Create `src/parser/command-parser.ts` file
+- [x] 2.2 Define `ParsedCommand` interface with tool, scope, requirements, and raw fields
+- [x] 2.3 Implement tool pattern matching (dev, test, refactor, fix, update and variants) - case insensitive
+- [x] 2.4 Implement scope pattern matching (rac, partners, global, web, mobile, suppliers, notifications, queues) - case insensitive
+- [x] 2.5 Implement `parseCommand` function that extracts tool, scope, and requirements from natural language
+- [x] 2.6 Add default values: tool="dev", scope="global" if not detected
+- [x] 2.7 Handle commands without explicit tool or scope
+- [x] 2.8 Export `parseCommand` function and `ParsedCommand` type
+- [x] 2.9 Add JSDoc documentation for the parseCommand function
+- [x] 2.10 Test parser with various command formats (with/without tool, with/without scope, case variations)
 
 - [ ] 3.0 Implement Gemini client for embeddings
 - [ ] 3.1 Create `src/rag/gemini-client.ts` file
