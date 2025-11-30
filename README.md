@@ -17,6 +17,26 @@ Built with [@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/t
 
 - **Node.js** 20+
 - **pnpm** (or npm/yarn)
+- **Supabase project** with pgvector extension enabled
+- **Google Gemini API key**
+
+## Environment Variables
+
+The following environment variables are required:
+
+- `SUPABASE_URL` - Your Supabase project URL
+- `SUPABASE_SERVICE_ROLE_KEY` - Your Supabase service role key (for server-side operations)
+- `GEMINI_API_KEY` - Your Google Gemini API key
+
+Create a `.env` file in the root directory with these variables:
+
+```env
+SUPABASE_URL=your_supabase_project_url
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+GEMINI_API_KEY=your_gemini_api_key
+```
+
+**Note:** The server will fail to start if any of these environment variables are missing.
 
 ## Getting Started
 
