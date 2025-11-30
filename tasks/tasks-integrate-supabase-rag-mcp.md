@@ -66,66 +66,66 @@ Update the file after completing each sub-task, not just after completing an ent
 - [x] 2.9 Add JSDoc documentation for the parseCommand function
 - [x] 2.10 Test parser with various command formats (with/without tool, with/without scope, case variations)
 
-- [ ] 3.0 Implement Gemini client for embeddings
-- [ ] 3.1 Create `src/rag/gemini-client.ts` file
-- [ ] 3.2 Import GoogleGenerativeAI from @google/generative-ai
-- [ ] 3.3 Validate GEMINI_API_KEY environment variable on module load
-- [ ] 3.4 Initialize GoogleGenerativeAI client with GEMINI_API_KEY
-- [ ] 3.5 Define EMBEDDING_MODEL constant as "text-embedding-004"
-- [ ] 3.6 Define EMBEDDING_DIMENSION constant as 768
-- [ ] 3.7 Implement `generateEmbedding` function that takes text string and returns Promise<number[]>
-- [ ] 3.8 Use model.embedContent() to generate embeddings
-- [ ] 3.9 Validate that embedding has 768 dimensions, throw error if not
-- [ ] 3.10 Handle errors from Gemini API with descriptive error messages
-- [ ] 3.11 Export `generateEmbedding`, `EMBEDDING_DIMENSION`, and `EMBEDDING_MODEL`
-- [ ] 3.12 Add JSDoc documentation for generateEmbedding function
-- [ ] 3.13 Test embedding generation with sample text
+- [x] 3.0 Implement Gemini client for embeddings
+- [x] 3.1 Create `src/rag/gemini-client.ts` file
+- [x] 3.2 Import GoogleGenerativeAI from @google/generative-ai
+- [x] 3.3 Validate GEMINI_API_KEY environment variable on module load
+- [x] 3.4 Initialize GoogleGenerativeAI client with GEMINI_API_KEY
+- [x] 3.5 Define EMBEDDING_MODEL constant as "text-embedding-004"
+- [x] 3.6 Define EMBEDDING_DIMENSION constant as 768
+- [x] 3.7 Implement `generateEmbedding` function that takes text string and returns Promise<number[]>
+- [x] 3.8 Use model.embedContent() to generate embeddings
+- [x] 3.9 Validate that embedding has 768 dimensions, throw error if not
+- [x] 3.10 Handle errors from Gemini API with descriptive error messages
+- [x] 3.11 Export `generateEmbedding`, `EMBEDDING_DIMENSION`, and `EMBEDDING_MODEL`
+- [x] 3.12 Add JSDoc documentation for generateEmbedding function
+- [x] 3.13 Test embedding generation with sample text
 
-- [ ] 4.0 Implement context searcher with Supabase integration
-- [ ] 4.1 Create `src/rag/context-searcher.ts` file
-- [ ] 4.2 Import createClient from @supabase/supabase-js
-- [ ] 4.3 Import generateEmbedding from gemini-client
-- [ ] 4.4 Validate SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables on module load
-- [ ] 4.5 Initialize Supabase client with service role key (no auth, no session persistence)
-- [ ] 4.6 Define SearchResult interface (id, app, scope, title, path, content, distance)
-- [ ] 4.7 Define RAGContext interface (technology, folderStructure, conventions, examples, architecture)
-- [ ] 4.8 Implement `searchSimilarContexts` helper function that calls RPC match_dev_contexts
-- [ ] 4.9 Convert embedding array to string format for pgvector: `[${embedding.join(",")}]`
-- [ ] 4.10 Handle RPC errors - fail with clear error message (no fallback per PRD)
-- [ ] 4.11 Implement ContextSearcher class with searchContext method
-- [ ] 4.12 In searchContext, build 4 parallel queries for different aspects:
+- [x] 4.0 Implement context searcher with Supabase integration
+- [x] 4.1 Create `src/rag/context-searcher.ts` file
+- [x] 4.2 Import createClient from @supabase/supabase-js
+- [x] 4.3 Import generateEmbedding from gemini-client
+- [x] 4.4 Validate SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables on module load
+- [x] 4.5 Initialize Supabase client with service role key (no auth, no session persistence)
+- [x] 4.6 Define SearchResult interface (id, app, scope, title, path, content, distance)
+- [x] 4.7 Define RAGContext interface (technology, folderStructure, conventions, examples, architecture)
+- [x] 4.8 Implement `searchSimilarContexts` helper function that calls RPC match_dev_contexts
+- [x] 4.9 Convert embedding array to string format for pgvector: `[${embedding.join(",")}]`
+- [x] 4.10 Handle RPC errors - fail with clear error message (no fallback per PRD)
+- [x] 4.11 Implement ContextSearcher class with searchContext method
+- [x] 4.12 In searchContext, build 4 parallel queries for different aspects:
   - Technology/stack: apps=[scope, "global"], scopes=["architecture", "introduction"], topK=2
   - Folder structure: apps=[scope, "global"], scopes=["architecture", "routing"], topK=2
   - Code conventions: apps=[scope, "global"], scopes=["style-guide", "architecture"], topK=2
   - Similar examples: apps=[scope, "global"], scopes=["tasks-examples", "core"], topK=2
-- [ ] 4.13 Generate embeddings for each query using generateEmbedding
-- [ ] 4.14 Execute all searches in parallel using Promise.all
-- [ ] 4.15 Combine results into RAGContext object with combineResults helper method
-- [ ] 4.16 Implement combineResults method that formats SearchResult[] into string with metadata
-- [ ] 4.17 Add logging for queries, results, tokens, and timing
-- [ ] 4.18 Export ContextSearcher class and interfaces
-- [ ] 4.19 Add JSDoc documentation for ContextSearcher class and methods
-- [ ] 4.20 Test context search with sample queries
+- [x] 4.13 Generate embeddings for each query using generateEmbedding
+- [x] 4.14 Execute all searches in parallel using Promise.all
+- [x] 4.15 Combine results into RAGContext object with combineResults helper method
+- [x] 4.16 Implement combineResults method that formats SearchResult[] into string with metadata
+- [x] 4.17 Add logging for queries, results, tokens, and timing
+- [x] 4.18 Export ContextSearcher class and interfaces
+- [x] 4.19 Add JSDoc documentation for ContextSearcher class and methods
+- [x] 4.20 Test context search with sample queries
 
-- [ ] 5.0 Implement prompt builder
-- [ ] 5.1 Create `src/prompts/prompt-builder.ts` file
-- [ ] 5.2 Import ParsedCommand from parser module
-- [ ] 5.3 Import RAGContext from context-searcher
-- [ ] 5.4 Define StructuredPrompt interface (system, user, context)
-- [ ] 5.5 Implement PromptBuilder class with buildPrompt method
-- [ ] 5.6 Implement buildSystemPrompt method that includes:
+- [x] 5.0 Implement prompt builder
+- [x] 5.1 Create `src/prompts/prompt-builder.ts` file
+- [x] 5.2 Import ParsedCommand from parser module
+- [x] 5.3 Import RAGContext from context-searcher
+- [x] 5.4 Define StructuredPrompt interface (system, user, context)
+- [x] 5.5 Implement PromptBuilder class with buildPrompt method
+- [x] 5.6 Implement buildSystemPrompt method that includes:
   - Technical context (technology and stack)
   - Project structure
   - Code conventions
   - Development principles (SOLID, Clean Code)
-- [ ] 5.7 Implement buildUserPrompt method that includes:
+- [x] 5.7 Implement buildUserPrompt method that includes:
   - Specific task (tool + requirements)
   - Similar examples if available
   - Instructions to follow conventions
-- [ ] 5.8 Include metadata in prompts (app, scope, distance) from context
-- [ ] 5.9 Export PromptBuilder class and StructuredPrompt interface
-- [ ] 5.10 Add JSDoc documentation for PromptBuilder class and methods
-- [ ] 5.11 Test prompt generation with sample commands and context
+- [x] 5.8 Include metadata in prompts (app, scope, distance) from context
+- [x] 5.9 Export PromptBuilder class and StructuredPrompt interface
+- [x] 5.10 Add JSDoc documentation for PromptBuilder class and methods
+- [x] 5.11 Test prompt generation with sample commands and context
 
 - [ ] 6.0 Integrate with MCP server
 - [ ] 6.1 Open `src/index.ts` file
@@ -146,13 +146,13 @@ Update the file after completing each sub-task, not just after completing an ent
 - [ ] 6.12 Verify existing tools (hello, get-info) still work
 - [ ] 6.13 Test dev-task prompt with sample commands
 
-- [ ] 7.0 Add scope validation
-- [ ] 7.1 In context-searcher.ts, add method to validate scope exists in dev_apps table
-- [ ] 7.2 Query dev_apps table to check if scope key exists and is active
-- [ ] 7.3 If scope doesn't exist, query all active apps from dev_apps table
-- [ ] 7.4 Return clear error message with list of available scopes if validation fails
-- [ ] 7.5 Call scope validation in searchContext before performing searches
-- [ ] 7.6 Test scope validation with valid and invalid scopes
+- [x] 7.0 Add scope validation
+- [x] 7.1 In context-searcher.ts, add method to validate scope exists in dev_apps table
+- [x] 7.2 Query dev_apps table to check if scope key exists and is active
+- [x] 7.3 If scope doesn't exist, query all active apps from dev_apps table
+- [x] 7.4 Return clear error message with list of available scopes if validation fails
+- [x] 7.5 Call scope validation in searchContext before performing searches
+- [x] 7.6 Test scope validation with valid and invalid scopes
 
 - [ ] 8.0 Testing and validation
 - [ ] 8.1 Test parser with various command formats:
