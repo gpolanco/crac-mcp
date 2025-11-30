@@ -8,15 +8,6 @@ const inputSchema = z.object({
   name: z.string().describe("Name to greet"),
 });
 
-const outputSchema = z.object({
-  content: z.array(
-    z.object({
-      type: z.string(),
-      text: z.string(),
-    })
-  ),
-});
-
 export function createMcpServer(): McpServer {
   const server = new McpServer({
     name: "crac-mcp",
@@ -34,7 +25,6 @@ export function createMcpServer(): McpServer {
       title: "Hello Tool",
       description: "Say hello to someone",
       inputSchema: inputSchema.shape,
-      outputSchema: outputSchema.shape,
     },
     async (args: any) => {
       const { name } = args;
@@ -63,7 +53,6 @@ export function createMcpServer(): McpServer {
             "Sección específica de información (server, tools, resources, prompts)"
           ),
       },
-      outputSchema: outputSchema.shape,
     },
     async (args: any) => {
       const { section } = args;
@@ -102,7 +91,6 @@ export function createMcpServer(): McpServer {
             text: JSON.stringify(filteredInfo, null, 2),
           },
         ],
-        structuredContent: filteredInfo,
       };
     }
   );
@@ -185,12 +173,8 @@ export function createMcpServer(): McpServer {
 
         // Parse command
         const parsed = parseCommand(command);
-        console.log(`[MCP] Parsed command:`, parsed);
 
         // Search context using RAG (invisible to user)
-        console.log(
-          `[MCP] Starting RAG context search for scope: ${parsed.scope}, tool: ${parsed.tool}`
-        );
         const ragContext = await contextSearcher.searchContext(
           parsed.requirements,
           parsed.scope,
@@ -204,17 +188,6 @@ export function createMcpServer(): McpServer {
         const hasExamples = ragContext.examples.trim().length > 0;
         const ragFoundContext =
           hasTechnology || hasStructure || hasConventions || hasExamples;
-
-        console.log(`[MCP] RAG context search completed:`);
-        console.log(`[MCP]   - Technology: ${hasTechnology ? "✓" : "✗"}`);
-        console.log(`[MCP]   - Structure: ${hasStructure ? "✓" : "✗"}`);
-        console.log(`[MCP]   - Conventions: ${hasConventions ? "✓" : "✗"}`);
-        console.log(`[MCP]   - Examples: ${hasExamples ? "✓" : "✗"}`);
-        console.log(
-          `[MCP]   - RAG found context: ${
-            ragFoundContext ? "YES" : "NO (using fallbacks)"
-          }`
-        );
 
         // Build structured prompt
         const structuredPrompt = promptBuilder.buildPrompt(parsed, ragContext);
@@ -267,7 +240,7 @@ export function createMcpServer(): McpServer {
           ],
         };
       } catch (error) {
-        console.error("[MCP] Error generating dev-task prompt:", error);
+        console.error("[MCP] Error in dev-task prompt:", error);
 
         const errorMessage =
           error instanceof Error

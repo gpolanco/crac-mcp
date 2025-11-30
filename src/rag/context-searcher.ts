@@ -180,8 +180,6 @@ export class ContextSearcher {
     scope: string,
     tool: string
   ): Promise<RAGContext> {
-    const startTime = Date.now();
-
     // Validate scope exists
     const isValidScope = await validateScope(scope);
     if (!isValidScope) {
@@ -225,21 +223,8 @@ export class ContextSearcher {
       },
     ];
 
-    // Log queries
-    console.log(
-      `[ContextSearcher] Searching context for scope: ${scope}, tool: ${tool}`
-    );
-    console.log(`[ContextSearcher] Requirements: ${requirements}`);
-    queries.forEach((q, idx) => {
-      console.log(
-        `[ContextSearcher] Query ${idx + 1} (${q.aspect}): ${q.query}`
-      );
-    });
-
     // Generate embeddings and search in parallel
     const searchPromises = queries.map(async (queryConfig) => {
-      const queryStartTime = Date.now();
-
       // Generate embedding for the query
       const embedding = await generateEmbedding(queryConfig.query);
 
@@ -251,25 +236,9 @@ export class ContextSearcher {
         queryConfig.topK
       );
 
-      const queryEndTime = Date.now();
-      const queryTime = queryEndTime - queryStartTime;
-
-      // Log results
-      console.log(
-        `[ContextSearcher] Query ${queryConfig.aspect} completed in ${queryTime}ms, found ${results.length} results`
-      );
-      results.forEach((r, idx) => {
-        console.log(
-          `[ContextSearcher]   Result ${idx + 1}: ${r.title} (${r.app}/${
-            r.scope
-          }, distance: ${r.distance.toFixed(4)})`
-        );
-      });
-
       return {
         aspect: queryConfig.aspect,
         results,
-        time: queryTime,
       };
     });
 
@@ -295,13 +264,6 @@ export class ContextSearcher {
 
     // Combine technology and folder structure for architecture
     ragContext.architecture = `${ragContext.technology}\n\n${ragContext.folderStructure}`;
-
-    const totalTime = Date.now() - startTime;
-    const totalTokens = queries.length; // One embedding per query
-
-    console.log(
-      `[ContextSearcher] Total search time: ${totalTime}ms, queries: ${queries.length}, tokens: ${totalTokens}`
-    );
 
     return ragContext;
   }
